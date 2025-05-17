@@ -8,7 +8,6 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import sk.spsepo.lesko.steeplechasegame.GameEngine;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private GameEngine engine;
@@ -23,7 +22,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         getHolder().addCallback(this);
         textPaint.setColor(Color.BLACK);
         textPaint.setTextSize(48);
-        barPaint.setColor(Color.GREEN);
+        barPaint.setStyle(Paint.Style.FILL);
         borderPaint.setColor(Color.BLACK);
         borderPaint.setStyle(Paint.Style.STROKE);
         borderPaint.setStrokeWidth(4);
@@ -33,23 +32,22 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         this.engine = engine;
     }
 
-    public void startLoop() {
+    public void startLoop(Context ctx) {
         running = true;
         gameThread = new Thread(() -> {
             long last = System.nanoTime();
             while (running) {
                 long now = System.nanoTime();
-                double dt = (now - last) / 1_000_000_000.0;
+                double dt = (now - last)/1_000_000_000.0;
                 last = now;
 
-                engine.update(dt);
-
-                Canvas canvas = getHolder().lockCanvas();
-                if (canvas != null) {
+                engine.update(dt, ctx);
+                Canvas c = getHolder().lockCanvas();
+                if (c != null) {
                     synchronized (getHolder()) {
-                        drawGame(canvas);
+                        drawGame(c);
                     }
-                    getHolder().unlockCanvasAndPost(canvas);
+                    getHolder().unlockCanvasAndPost(c);
                 }
             }
         });
@@ -57,65 +55,66 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     private void drawGame(Canvas canvas) {
-        // Clear background
-        canvas.drawColor(Color.rgb(255, 198, 108)); // ORANGE
+        // pozadie
+        canvas.drawColor(Color.rgb(255,198,108));
 
-        // Draw terrain strips
-        double offset = engine.getSpeed() * 0; // replace with actual posun logic if needed
-        int segmentWidth = 62;
-        int count = 15;
-        double remaining = engine.getRemaining();
-        String[] path = engine.getTerrainPath(); // add this method
-        for (int i = 0; i < count; i++) {
-            int index = i;
-            if (index >= path.length) break;
-            String type = path[index];
-            int color;
-            switch (type) {
-                case "Napájadlo": color = Color.CYAN; break;
-                case "Náročné pásmo": color = Color.DKGRAY; break;
-                case "Šprintérske pásmo": color = Color.YELLOW; break;
-                default: color = Color.rgb(160,82,45); break;
+        // pásy trate
+        String[] path = engine.getTerrainPath();
+        double offset = engine.getPathOffset();
+        int w = 62, y1=220, y2=420;
+        for(int i=0;i<path.length;i++){
+            String t = path[i];
+            int col=0;
+            switch(t){
+                case "Napájadlo": col=Color.CYAN; break;
+                case "Náročné pásmo": col=Color.DKGRAY; break;
+                case "Šprintérske pásmo": col=Color.YELLOW; break;
+                default: col=Color.rgb(160,82,45);
             }
-            barPaint.setColor(color);
-            int x = (int)(i * segmentWidth - offset % segmentWidth);
-            canvas.drawRect(x, 220, x + segmentWidth, 420, barPaint);
-            canvas.drawRect(x, 220, x + segmentWidth, 420, borderPaint);
+            barPaint.setColor(col);
+            int x = (int)(i*w - offset%w);
+            canvas.drawRect(x,y1,x+w,y2,barPaint);
+            canvas.drawRect(x,y1,x+w,y2,borderPaint);
         }
 
-        // Draw horse sprite
-        Bitmap horseFrame = engine.getHorse().getCurrentFrame();
-        int hx = 70;
-        int hy = 300;
-        if (horseFrame != null) {
-            canvas.drawBitmap(horseFrame, hx, hy, null);
+        // kôň na mieste
+        Bitmap horseBmp = engine.getHorse().getCurrentBitmap();
+        if(horseBmp!=null){
+            canvas.drawBitmap(horseBmp,70,300,null);
         }
 
-        // UI stats
-        // Speed
-        canvas.drawText("Rýchlosť: " + engine.getSpeed(), 20, 60, textPaint);
-        // Stamina bar
-        int barX = 20, barY = 80, barW = 300, barH = 30;
-        int stamina = engine.getStamina();
-        int fillW = barW * stamina / Horse.MAX_STAMINA;
-        barPaint.setColor(stamina>66?Color.GREEN:stamina>33?Color.YELLOW:Color.RED);
-        canvas.drawRect(barX, barY, barX + fillW, barY + barH, barPaint);
-        canvas.drawRect(barX, barY, barX + barW, barY + barH, borderPaint);
+        // UI: rýchlosť
+        canvas.drawText("Rýchlosť: "+engine.getSpeed(),20,60,textPaint);
 
-        // Remaining meters centered
-        String meters = (int)engine.getRemaining() + "m";
-        float mw = textPaint.measureText(meters);
-        canvas.drawText(meters, (getWidth()-mw)/2, 50, textPaint);
+        // stamina bar
+        int st = engine.getStamina();
+        int barW=300, barH=30;
+        int filled = barW*st/ Horse.MAX_STAMINA;
+        barPaint.setColor(st>66?Color.GREEN:st>33?Color.YELLOW:Color.RED);
+        canvas.drawRect(20,80,20+filled,80+barH,barPaint);
+        canvas.drawRect(20,80,20+barW,80+barH,borderPaint);
 
-        // Time
-        canvas.drawText(engine.getTimeString(), getWidth()-300, 60, textPaint);
+        // metre
+        String m = (int)engine.getRemaining()+"m";
+        float mw=textPaint.measureText(m);
+        canvas.drawText(m,(getWidth()-mw)/2,50,textPaint);
 
-        // Record and overload
-        canvas.drawText("Rekord: " + engine.getBestRecord(), 580, 120, textPaint);
-        canvas.drawText("Preťaženie: " + (int)engine.getOverloadPercent() + "%", 580, 160, textPaint);
+        // čas
+        canvas.drawText(engine.getTimeString(),getWidth()-300,60,textPaint);
+
+        // rekord a preťaženie
+        canvas.drawText("Rekord: "+engine.getBestRecord(),580,120,textPaint);
+        canvas.drawText("Preťaženie: "+(int)engine.getOverloadPercent()+"%",580,160,textPaint);
+
+        // prípadné hlásky
+        if(!engine.isRunning()){
+            String msg = engine.isVictory()?"Vyhral si!":"Prehral si!";
+            float tw=textPaint.measureText(msg);
+            canvas.drawText(msg,(getWidth()-tw)/2, getHeight()/2,textPaint);
+        }
     }
 
-    @Override public void surfaceCreated(SurfaceHolder holder) {}
-    @Override public void surfaceChanged(SurfaceHolder h, int f, int w, int ht) {}
-    @Override public void surfaceDestroyed(SurfaceHolder h) { running = false; }
+    @Override public void surfaceCreated(SurfaceHolder h){}
+    @Override public void surfaceChanged(SurfaceHolder h,int f,int w,int ht){}
+    @Override public void surfaceDestroyed(SurfaceHolder h){running=false;}
 }

@@ -1,11 +1,14 @@
 package sk.spsepo.lesko.steeplechasegame;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 public class Utils {
+    private static final String PREFS = "steeple_prefs";
+    private static final String KEY_BEST = "best_time";
 
-    /** Prevod času vo formáte MM:SS:cc (stotiny) na celkové stotiny. */
+    /** Prevod času vo formáte MM:SS:cc na celkové stotiny. */
     public static int timeToHundredths(String time) {
         String[] parts = time.split(":");
         int m = Integer.parseInt(parts[0]);
@@ -23,17 +26,18 @@ public class Utils {
         return String.format(Locale.US, "%d:%02d:%02d", m, s, c);
     }
 
-    /** Výber minima z poľa časov (reťazcov formátu MM:SS:cc). */
-    public static String getMinimalTime(String[] times) {
-        int best = Integer.MAX_VALUE;
-        String result = "N/A";
-        for (String t : times) {
-            int h = timeToHundredths(t);
-            if (h < best) {
-                best = h;
-                result = t;
-            }
+    /** Uloží najlepší čas, ak je lepší než existujúci */
+    public static void saveBestTime(Context ctx, String newTime) {
+        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String old = prefs.getString(KEY_BEST, "N/A");
+        if (old.equals("N/A") || timeToHundredths(newTime) < timeToHundredths(old)) {
+            prefs.edit().putString(KEY_BEST, newTime).apply();
         }
-        return result;
+    }
+
+    /** Načíta najlepší čas alebo "N/A" */
+    public static String loadBestTime(Context ctx) {
+        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return prefs.getString(KEY_BEST, "N/A");
     }
 }

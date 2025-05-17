@@ -1,13 +1,7 @@
 package sk.spsepo.lesko.steeplechasegame;
 
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
-import sk.spsepo.lesko.steeplechasegame.R;
-import sk.spsepo.lesko.steeplechasegame.GameEngine;
-import sk.spsepo.lesko.steeplechasegame.Horse;
-import sk.spsepo.lesko.steeplechasegame.Terrain;
 
 public class MainActivity extends AppCompatActivity {
     private GameView gameView;
@@ -17,29 +11,26 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);  // R is the generated resource class
+        setContentView(R.layout.activity_main);
 
-        // Initialize model
-        horse = new Horse();
+        // 1) Inicializácia Horse s Contextom kvôli drawable
+        horse = new Horse(this);
+
+        // 2) Inicializácia terénu a engine
         Terrain terrain = new Terrain(this, "mapa1.json");
-        engine = new GameEngine(horse, terrain);
+        engine = new GameEngine(horse, terrain, this);  // pridali sme Context
 
-        // Wire up the view
+        // 3) Zobrazenie najlepšieho času (už sa načítava v GameEngine z Utils)
         gameView = findViewById(R.id.game_view);
         gameView.setEngine(engine);
 
-        // Control buttons
-        Button btnAdd    = findViewById(R.id.btn_add);
-        Button btnReduce = findViewById(R.id.btn_reduce);
-        Button btnStart  = findViewById(R.id.btn_start);
-        Button btnCancel = findViewById(R.id.btn_cancel);
+        // 4) Ovládacie tlačidlá
+        findViewById(R.id.btn_add).setOnClickListener(v -> horse.addSpeed());
+        findViewById(R.id.btn_reduce).setOnClickListener(v -> horse.reduceSpeed());
+        findViewById(R.id.btn_start).setOnClickListener(v -> engine.startRace());
+        findViewById(R.id.btn_cancel).setOnClickListener(v -> finish());
 
-        btnAdd   .setOnClickListener(v -> horse.addSpeed());
-        btnReduce.setOnClickListener(v -> horse.reduceSpeed());
-        btnStart .setOnClickListener(v -> engine.startRace());
-        btnCancel.setOnClickListener(v -> finish());  // finish() closes Activity
-
-        // Kick off the game loop
-        gameView.post(gameView::startLoop);
+        // 5) Spustenie hernej slučky s Contextom
+        gameView.post(() -> gameView.startLoop(this));  // odovzdaj Context do loopu
     }
 }
