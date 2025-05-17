@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#FFFFFF"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/dialogTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🟢 INFO O HRE 🐎"
+        android:textColor="#4CAF50"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
+        android:id="@+id/dialogText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Staň sa rýchlym a odvážnym žrebcom! Ovládaj rýchlosť tlačidlami PRIDAJ A SPOMAĽ (o 4 km/h) až do maximálnej rýchlosti 60 km/h. V hre sú aj 3 pásma a napájadlá. Lúka - normálne pásmo, Šprintérske pásmo - zvyšuje rýchlosť, Náročné pásmo - skôr unaví koňa a Napájadlo - miesto, kde kôň rýchlejšie načerpe energiu. Je dôležité strážiť si ju, aby si kôň mohol udržať rýchlosť. Hra je na čas a najlepšie skóre sa ukladá!"
+        android:textColor="#333333"
+        android:textSize="16sp"
+        android:lineSpacingExtra="6dp"/>
+</LinearLayout>
