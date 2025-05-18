@@ -15,10 +15,10 @@ public class Terrain {
     // hodnoty
     public static final double BASE_REST       = 0.01;
     public static final double BASE_ACCEL      = 1.0;
-    public static final double BASE_DIFFICULTY = 7000;
+    public static final double BASE_DIFFICULTY = 6000;
     public static final double BASE_BONUS      = 1;
     public static final double CHALLENGING_REST       = 0.005;
-    public static final double CHALLENGING_DIFFICULTY = 5000;
+    public static final double CHALLENGING_DIFFICULTY = 4000;
     public static final double SPRINT_ACCEL           = 1.25;
     public static final double WATER_BONUS            = 10;
 

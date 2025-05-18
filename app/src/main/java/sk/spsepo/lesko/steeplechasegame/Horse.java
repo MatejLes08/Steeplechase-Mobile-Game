@@ -3,6 +3,7 @@ package sk.spsepo.lesko.steeplechasegame;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,41 +29,64 @@ public class Horse {
     private List<Bitmap> walkFrames = new ArrayList<>();
     private List<Bitmap> idleFrames = new ArrayList<>();
 
+
     private double frameIndex = 0;
     private double animationSpeed = 0.1;
+    private Bitmap currentBitmap;
+
 
     public Horse(Context ctx) {
         loadSpriteSheet(ctx);  // upravíme na decodeResource
+        if (!idleFrames.isEmpty()) {
+            currentBitmap = idleFrames.get(0);
+        }
     }
 
     private void loadSpriteSheet(Context ctx) {
-        // Bežanie – horse_run.png
+        // pomôže nám na zrkadlenie
+        Matrix flipH = new Matrix();
+        flipH.preScale(-1, 1);
+
+        // ---- RUN ----
         Bitmap sheetRun = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.horse_run);
-        int frameWRun = sheetRun.getHeight();
-        int countRun = sheetRun.getWidth() / frameWRun;
+        int countRun = sheetRun.getWidth() / sheetRun.getHeight();
+        int frameWRun = sheetRun.getWidth() / countRun;
+        int frameHRun = sheetRun.getHeight();
         for (int i = 0; i < countRun; i++) {
-            Bitmap frame = Bitmap.createBitmap(sheetRun, i * frameWRun, 0, frameWRun, frameWRun);
-            runFrames.add(Bitmap.createScaledBitmap(frame, frameWRun * 2, frameWRun * 2, false));
+            Bitmap frame = Bitmap.createBitmap(
+                    sheetRun,
+                    i * frameWRun, 0,
+                    frameWRun, frameHRun
+            );
+            // zrkadliť
+            Bitmap flipped = Bitmap.createBitmap(frame, 0, 0, frameWRun, frameHRun, flipH, false);
+            // zdvojnásobiť veľkosť
+            runFrames.add(Bitmap.createScaledBitmap(flipped, frameWRun*2, frameHRun*2, false));
         }
 
-        // Chôdza – horse_walk.png
+        // ---- WALK ----
         Bitmap sheetWalk = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.horse_walk);
-        int frameWWalk = sheetWalk.getHeight();
-        int countWalk = sheetWalk.getWidth() / frameWWalk;
+        int countWalk = sheetWalk.getWidth() / sheetWalk.getHeight();
+        int frameWWalk = sheetWalk.getWidth() / countWalk;
+        int frameHWalk = sheetWalk.getHeight();
         for (int i = 0; i < countWalk; i++) {
-            Bitmap frame = Bitmap.createBitmap(sheetWalk, i * frameWWalk, 0, frameWWalk, frameWWalk);
-            walkFrames.add(Bitmap.createScaledBitmap(frame, frameWWalk * 2, frameWWalk * 2, false));
+            Bitmap frame = Bitmap.createBitmap(sheetWalk, i*frameWWalk, 0, frameWWalk, frameHWalk);
+            Bitmap flipped = Bitmap.createBitmap(frame, 0, 0, frameWWalk, frameHWalk, flipH, false);
+            walkFrames.add(Bitmap.createScaledBitmap(flipped, frameWWalk*2, frameHWalk*2, false));
         }
 
-        // Státie – horse_idle.png
+        // ---- IDLE ----
         Bitmap sheetIdle = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.horse_idle);
-        int frameWIdle = sheetIdle.getHeight();
-        int countIdle = sheetIdle.getWidth() / frameWIdle;
+        int countIdle = sheetIdle.getWidth() / sheetIdle.getHeight();
+        int frameWIdle = sheetIdle.getWidth() / countIdle;
+        int frameHIdle = sheetIdle.getHeight();
         for (int i = 0; i < countIdle; i++) {
-            Bitmap frame = Bitmap.createBitmap(sheetIdle, i * frameWIdle, 0, frameWIdle, frameWIdle);
-            idleFrames.add(Bitmap.createScaledBitmap(frame, frameWIdle * 2, frameWIdle * 2, false));
+            Bitmap frame = Bitmap.createBitmap(sheetIdle, i*frameWIdle, 0, frameWIdle, frameHIdle);
+            Bitmap flipped = Bitmap.createBitmap(frame, 0, 0, frameWIdle, frameHIdle, flipH, false);
+            idleFrames.add(Bitmap.createScaledBitmap(flipped, frameWIdle*2, frameHIdle*2, false));
         }
     }
+
 
 
     public void reset() {
@@ -101,7 +125,7 @@ public class Horse {
             overload = speed / (difficulty - SPRINT_DIFFICULTY_OFFSET);
         }
 
-        fatigue += overload * dt;
+        fatigue += overload;
         if (fatigue < 0) fatigue = 0;
 
         stamina = MAX_STAMINA - (int)fatigue;
@@ -113,11 +137,10 @@ public class Horse {
     }
 
     public void updateAnimation(double dt) {
-        frameIndex += animationSpeed * dt;
         List<Bitmap> frames;
         if (speed <= 0) {
             frames = idleFrames;
-            animationSpeed = 0.1;
+            animationSpeed = 0.01;
         } else if (speed <= 12) {
             frames = walkFrames;
             animationSpeed = 0.055 * speed / 24 * walkFrames.size();
@@ -126,20 +149,19 @@ public class Horse {
             animationSpeed = 0.001 * speed * runFrames.size();
         }
         if (frames.isEmpty()) return;
-        if (frameIndex >= frames.size()) frameIndex = 0;
+
+        // inkrementuj index a cykluj cez všetky snímky
+        frameIndex = (frameIndex + animationSpeed * dt * 60) % frames.size();
+
+        // nastav priamo currentBitmap
+        currentBitmap = frames.get((int) frameIndex);
     }
 
     /**
      * Vráti aktuálny frame bitmapy pre vykreslenie.
      */
     public Bitmap getCurrentBitmap() {
-        List<Bitmap> frames;
-        if (speed <= 0) frames = idleFrames;
-        else if (speed <= 12) frames = walkFrames;
-        else frames = runFrames;
-        if (frames.isEmpty()) return null;
-        int idx = (int)frameIndex;
-        return frames.get(idx);
+        return currentBitmap;
     }
 
     // getters pre UI

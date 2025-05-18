@@ -1,9 +1,11 @@
 package sk.spsepo.lesko.steeplechasegame;
 
+import static sk.spsepo.lesko.steeplechasegame.Horse.TRACK_LENGTH;
+
 import android.content.Context;
 
 public class GameEngine {
-    private static final double TRACK = Horse.TRACK_LENGTH;
+    private static final double TRACK = TRACK_LENGTH;
     private final Horse horse;
     private final Terrain terrain;
 
@@ -19,6 +21,7 @@ public class GameEngine {
     private String currentType = "Cesta";
 
     private double pathOffset = 0;
+    private double lastAccel = 1.0;
 
     public GameEngine(Horse horse, Terrain terrain, Context ctx) {
         this.horse = horse;
@@ -50,6 +53,7 @@ public class GameEngine {
 
         // logika trate a stamina
         Terrain.TerrainSegment seg = terrain.getSegment(remaining);
+        lastAccel = seg.accel;
         horse.updateStamina(seg.rest, seg.accel, seg.difficulty, seg.bonus, dt);
 
         // stav koňa
@@ -86,7 +90,21 @@ public class GameEngine {
     public double getOverloadPercent() { return horse.getOverload() * 100; }
     public String getCurrentTerrain()  { return currentType; }
     public double getPathOffset()      { return pathOffset; }
-    public String[] getTerrainPath()   { return terrain.getTerrainTypesAhead(remaining, 15); }
     public Horse getHorse()            { return horse; }
     public double getRemaining()       { return remaining; }
+
+    public double getEffectiveSpeed() {
+        return horse.getSpeed() * lastAccel;
+    }
+
+    public String[] getTerrainPath() {
+        String[] path = new String[TRACK_LENGTH];
+        for (int m = 0; m < TRACK_LENGTH; m++) {
+            double rem = TRACK_LENGTH - m;
+            Terrain.TerrainSegment seg = terrain.getSegment(rem);
+            path[m] = seg.type;
+        }
+        return path;
+    }
+
 }
