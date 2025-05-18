@@ -1,0 +1,173 @@
+package sk.spsepo.lesko.steeplechasegame;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Horse {
+    public static final int TRACK_LENGTH = 2000;
+    public static final int MAX_STAMINA = 100;
+    public static final int MAX_SPEED = 60;
+    public static final int BEH_DIFFICULTY_OFFSET = 2000;
+    public static final int SPRINT_DIFFICULTY_OFFSET = 3000;
+
+    private int speed = 0;
+    private int stamina = MAX_STAMINA;
+    private double fatigue = 0;
+    private double distanceTravelled = 0;
+    private double remaining = TRACK_LENGTH;
+    private double overload = 0;
+
+    // animácie
+    private List<Bitmap> runFrames = new ArrayList<>();
+    private List<Bitmap> walkFrames = new ArrayList<>();
+    private List<Bitmap> idleFrames = new ArrayList<>();
+
+
+    private double frameIndex = 0;
+    private double animationSpeed = 0.1;
+    private Bitmap currentBitmap;
+
+
+    public Horse(Context ctx) {
+        loadSpriteSheet(ctx);  // upravíme na decodeResource
+        if (!idleFrames.isEmpty()) {
+            currentBitmap = idleFrames.get(0);
+        }
+    }
+
+    private void loadSpriteSheet(Context ctx) {
+        // pomôže nám na zrkadlenie
+        Matrix flipH = new Matrix();
+        flipH.preScale(-1, 1);
+
+        // ---- RUN ----
+        Bitmap sheetRun = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.horse_run);
+        int countRun = sheetRun.getWidth() / sheetRun.getHeight();
+        int frameWRun = sheetRun.getWidth() / countRun;
+        int frameHRun = sheetRun.getHeight();
+        for (int i = 0; i < countRun; i++) {
+            Bitmap frame = Bitmap.createBitmap(
+                    sheetRun,
+                    i * frameWRun, 0,
+                    frameWRun, frameHRun
+            );
+            // zrkadliť
+            Bitmap flipped = Bitmap.createBitmap(frame, 0, 0, frameWRun, frameHRun, flipH, false);
+            // zdvojnásobiť veľkosť
+            runFrames.add(Bitmap.createScaledBitmap(flipped, frameWRun*2, frameHRun*2, false));
+        }
+
+        // ---- WALK ----
+        Bitmap sheetWalk = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.horse_walk);
+        int countWalk = sheetWalk.getWidth() / sheetWalk.getHeight();
+        int frameWWalk = sheetWalk.getWidth() / countWalk;
+        int frameHWalk = sheetWalk.getHeight();
+        for (int i = 0; i < countWalk; i++) {
+            Bitmap frame = Bitmap.createBitmap(sheetWalk, i*frameWWalk, 0, frameWWalk, frameHWalk);
+            Bitmap flipped = Bitmap.createBitmap(frame, 0, 0, frameWWalk, frameHWalk, flipH, false);
+            walkFrames.add(Bitmap.createScaledBitmap(flipped, frameWWalk*2, frameHWalk*2, false));
+        }
+
+        // ---- IDLE ----
+        Bitmap sheetIdle = BitmapFactory.decodeResource(ctx.getResources(), R.drawable.horse_idle);
+        int countIdle = sheetIdle.getWidth() / sheetIdle.getHeight();
+        int frameWIdle = sheetIdle.getWidth() / countIdle;
+        int frameHIdle = sheetIdle.getHeight();
+        for (int i = 0; i < countIdle; i++) {
+            Bitmap frame = Bitmap.createBitmap(sheetIdle, i*frameWIdle, 0, frameWIdle, frameHIdle);
+            Bitmap flipped = Bitmap.createBitmap(frame, 0, 0, frameWIdle, frameHIdle, flipH, false);
+            idleFrames.add(Bitmap.createScaledBitmap(flipped, frameWIdle*2, frameHIdle*2, false));
+        }
+    }
+
+
+
+    public void reset() {
+        speed = 0;
+        stamina = MAX_STAMINA;
+        fatigue = 0;
+        distanceTravelled = 0;
+        remaining = TRACK_LENGTH;
+        overload = 0;
+        frameIndex = 0;
+    }
+
+    public void addSpeed() {
+        if (stamina > 0 && speed < MAX_SPEED) {
+            speed = Math.min(MAX_SPEED, speed + 4);
+        }
+    }
+
+    public void reduceSpeed() {
+        speed = Math.max(0, speed - 4);
+    }
+
+    public void updateStamina(double rest, double accel, double difficulty, double bonus, double dt) {
+        if (speed == 0) {
+            overload = (stamina < MAX_STAMINA) ? -rest * 2 * bonus : 0;
+        } else if (stamina <= 0) {
+            overload = 0;
+            speed = Math.max(0, speed - 4);
+        } else if (speed <= 12) {
+            overload = (stamina < MAX_STAMINA) ? -rest : 0;
+        } else if (speed <= 24) {
+            overload = speed / difficulty;
+        } else if (speed < 50) {
+            overload = speed / (difficulty - BEH_DIFFICULTY_OFFSET);
+        } else {
+            overload = speed / (difficulty - SPRINT_DIFFICULTY_OFFSET);
+        }
+
+        fatigue += overload;
+        if (fatigue < 0) fatigue = 0;
+
+        stamina = MAX_STAMINA - (int)fatigue;
+        stamina = Math.max(0, Math.min(MAX_STAMINA, stamina));
+
+        distanceTravelled += speed * accel / 3.6 * dt;
+        remaining = TRACK_LENGTH - distanceTravelled;
+        if (remaining < 0) remaining = 0;
+    }
+
+    public void updateAnimation(double dt) {
+        List<Bitmap> frames;
+        if (speed <= 0) {
+            frames = idleFrames;
+            animationSpeed = 0.01;
+        } else if (speed <= 12) {
+            frames = walkFrames;
+            animationSpeed = 0.055 * speed / 24 * walkFrames.size();
+        } else {
+            frames = runFrames;
+            animationSpeed = 0.001 * speed * runFrames.size();
+        }
+        if (frames.isEmpty()) return;
+
+        // inkrementuj index a cykluj cez všetky snímky
+        frameIndex = (frameIndex + animationSpeed * dt * 60) % frames.size();
+
+        // nastav priamo currentBitmap
+        currentBitmap = frames.get((int) frameIndex);
+    }
+
+    /**
+     * Vráti aktuálny frame bitmapy pre vykreslenie.
+     */
+    public Bitmap getCurrentBitmap() {
+        return currentBitmap;
+    }
+
+    // getters pre UI
+    public int getSpeed() { return speed; }
+    public int getStamina() { return stamina; }
+    public double getDistance() { return distanceTravelled; }
+    public int getRemaining() { return (int)Math.round(remaining); }
+    public double getOverload() { return overload; }
+}
