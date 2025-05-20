@@ -75,12 +75,11 @@
     <!-- Obrázok koňa -->
     <ImageView
         android:id="@+id/horseImageView"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
         android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:layout_marginEnd="50dp"
-        android:foregroundGravity="center"
-        app:srcCompat="@drawable/kon13" />
+        android:layout_marginTop="200dp"
+        android:layout_marginEnd="150dp"
+        app:srcCompat="@drawable/turned_horse_idle_0" />
 
 </RelativeLayout>

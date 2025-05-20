@@ -19,6 +19,7 @@ public class GameEngine {
     private String timeString = "0:00:00";
     private String bestRecord = "N/A";
     private String currentType = "Cesta";
+    private double distanceMeters = 0;
 
     private double pathOffset = 0;
     private double lastAccel = 1.0;
@@ -86,12 +87,13 @@ public class GameEngine {
     public String getTimeString()      { return timeString; }
     public String getBestRecord()      { return bestRecord; }
     public int getSpeed()              { return horse.getSpeed(); }
-    public int getStamina()            { return horse.getStamina(); }
+    public double getStamina()            { return horse.getStamina(); }
     public double getOverloadPercent() { return horse.getOverload() * 100; }
     public String getCurrentTerrain()  { return currentType; }
-    public double getPathOffset()      { return pathOffset; }
+    public double getPathOffset()      { return distanceMeters; }
     public Horse getHorse()            { return horse; }
     public double getRemaining()       { return remaining; }
+    public double getDistanceMeters()  { return horse.getDistance(); }
 
     public double getEffectiveSpeed() {
         return horse.getSpeed() * lastAccel;
