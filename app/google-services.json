@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "158264917295",
+    "project_id": "steeplechasemobilegame",
+    "storage_bucket": "steeplechasemobilegame.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:158264917295:android:7310ae957c59169071b5da",
+        "android_client_info": {
+          "package_name": "sk.spsepo.lesko.steeplechasegame"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7g5TAgYWB24h-EfAytsLIJH-5CqYju0o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
