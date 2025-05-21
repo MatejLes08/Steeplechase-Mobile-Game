@@ -17,6 +17,16 @@ public class Utils {
         return m * 6000 + s * 100 + c;
     }
 
+    public static void saveBestTime(Context ctx, String uid, String timeString) {
+        SharedPreferences prefs = ctx.getSharedPreferences("userdata", Context.MODE_PRIVATE);
+        prefs.edit().putString("record_" + uid, timeString).apply();
+    }
+
+    public static String loadBestTime(Context ctx, String uid) {
+        SharedPreferences prefs = ctx.getSharedPreferences("userdata", Context.MODE_PRIVATE);
+        return prefs.getString("record_" + uid, "N/A");
+    }
+
     /** Prevod stotín na časový reťazec MM:SS:cc */
     public static String hundredthsToTime(int hund) {
         int m = hund / 6000;

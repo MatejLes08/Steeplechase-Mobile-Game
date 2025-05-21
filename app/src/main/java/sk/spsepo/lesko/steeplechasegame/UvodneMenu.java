@@ -1,11 +1,13 @@
 package sk.spsepo.lesko.steeplechasegame;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +21,14 @@ public class UvodneMenu extends AppCompatActivity {
         setContentView(R.layout.activity_uvodne_menu);
 
         setBackground();
+
+        // Získaj meno používateľa zo SharedPreferences
+        SharedPreferences prefs = getSharedPreferences("userdata", MODE_PRIVATE);
+        String username = prefs.getString("username", "Hráč");
+
+        // Zobraz ho v TextView
+        TextView usernameText = findViewById(R.id.usernameText);
+        usernameText.setText(username);
     }
 
     public void startGame(View view) {

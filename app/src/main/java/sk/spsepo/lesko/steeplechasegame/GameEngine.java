@@ -3,6 +3,7 @@ package sk.spsepo.lesko.steeplechasegame;
 import static sk.spsepo.lesko.steeplechasegame.Horse.TRACK_LENGTH;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 public class GameEngine {
     private static final double TRACK = TRACK_LENGTH;
@@ -24,12 +25,19 @@ public class GameEngine {
     private double pathOffset = 0;
     private double lastAccel = 1.0;
 
+    private String uid; // Firebase UID pre prihláseného používateľa
+
     public GameEngine(Horse horse, Terrain terrain, Context ctx) {
         this.horse = horse;
         this.terrain = terrain;
 
-        // načítaj rekord zo SharedPreferences
-        bestRecord = Utils.loadBestTime(ctx);
+        // získať UID z SharedPreferences (uložené po login/registrácii)
+        SharedPreferences prefs = ctx.getSharedPreferences("userdata", Context.MODE_PRIVATE);
+        uid = prefs.getString("uid", null);
+
+        if (uid != null) {
+            bestRecord = Utils.loadBestTime(ctx, uid);
+        }
     }
 
     public void startRace() {
@@ -75,10 +83,29 @@ public class GameEngine {
         if (remaining <= 0) {
             running = false;
             victory = true;
-            Utils.saveBestTime(ctx, timeString);
-            bestRecord = timeString;
 
+            if (uid != null) {
+                String currentTime = timeString;
+
+                // načítaj existujúci rekord
+                String existing = Utils.loadBestTime(ctx, uid);
+                if (existing.equals("N/A") || isFaster(currentTime, existing)) {
+                    Utils.saveBestTime(ctx, uid, currentTime);
+                    bestRecord = currentTime;
+                }
+            }
         }
+    }
+
+    private boolean isFaster(String current, String previous) {
+        // formát: M:SS:CC (napr. 1:23:45)
+        String[] cur = current.split(":");
+        String[] prev = previous.split(":");
+
+        int curHundredths = Integer.parseInt(cur[0]) * 6000 + Integer.parseInt(cur[1]) * 100 + Integer.parseInt(cur[2]);
+        int prevHundredths = Integer.parseInt(prev[0]) * 6000 + Integer.parseInt(prev[1]) * 100 + Integer.parseInt(prev[2]);
+
+        return curHundredths < prevHundredths;
     }
 
     // Gettre pre UI / GameView
@@ -87,7 +114,7 @@ public class GameEngine {
     public String getTimeString()      { return timeString; }
     public String getBestRecord()      { return bestRecord; }
     public int getSpeed()              { return horse.getSpeed(); }
-    public double getStamina()            { return horse.getStamina(); }
+    public double getStamina()         { return horse.getStamina(); }
     public double getOverloadPercent() { return horse.getOverload() * 100; }
     public String getCurrentTerrain()  { return currentType; }
     public double getPathOffset()      { return distanceMeters; }
@@ -108,5 +135,4 @@ public class GameEngine {
         }
         return path;
     }
-
 }
