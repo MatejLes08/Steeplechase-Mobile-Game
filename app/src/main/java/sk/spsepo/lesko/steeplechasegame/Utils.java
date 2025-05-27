@@ -1,12 +1,15 @@
 package sk.spsepo.lesko.steeplechasegame;
 
-import android.content.Context;
-import android.content.SharedPreferences;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class Utils {
-    private static final String PREFS = "steeple_prefs";
-    private static final String KEY_BEST = "best_time";
+    private static final String COLLECTION_USERS = "users";
+    private static final String KEY_BEST_TIME = "best_time";
 
     /** Prevod času vo formáte MM:SS:cc na celkové stotiny. */
     public static int timeToHundredths(String time) {
@@ -17,14 +20,55 @@ public class Utils {
         return m * 6000 + s * 100 + c;
     }
 
-    public static void saveBestTime(Context ctx, String uid, String timeString) {
-        SharedPreferences prefs = ctx.getSharedPreferences("userdata", Context.MODE_PRIVATE);
-        prefs.edit().putString("record_" + uid, timeString).apply();
+    /** Uloží najlepší čas do Firestore, ak je lepší než existujúci. */
+    public static void saveBestTime(String uid, String newTime, FirebaseFirestore db) {
+        if (uid == null) return;
+
+        // Načítaj existujúci rekord
+        db.collection(COLLECTION_USERS).document(uid)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String existing = documentSnapshot.getString(KEY_BEST_TIME);
+                    if (existing == null || existing.equals("N/A") || timeToHundredths(newTime) < timeToHundredths(existing)) {
+                        // Aktualizuj alebo vytvor dokument s novým časom
+                        Map<String, Object> data = new HashMap<>();
+                        data.put(KEY_BEST_TIME, newTime);
+                        db.collection(COLLECTION_USERS).document(uid)
+                                .set(data, SetOptions.merge())
+                                .addOnFailureListener(e -> {
+                                    // Handle error (e.g., log or show toast)
+                                    System.err.println("Failed to save best time: " + e.getMessage());
+                                });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // Handle error (e.g., log or show toast)
+                    System.err.println("Failed to load best time: " + e.getMessage());
+                });
     }
 
-    public static String loadBestTime(Context ctx, String uid) {
-        SharedPreferences prefs = ctx.getSharedPreferences("userdata", Context.MODE_PRIVATE);
-        return prefs.getString("record_" + uid, "N/A");
+    /** Načíta najlepší čas z Firestore alebo vráti "N/A". */
+    public static void loadBestTime(String uid, FirebaseFirestore db, OnBestTimeLoadedListener listener) {
+        if (uid == null) {
+            listener.onBestTimeLoaded("N/A");
+            return;
+        }
+
+        db.collection(COLLECTION_USERS).document(uid)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String bestTime = documentSnapshot.getString(KEY_BEST_TIME);
+                    listener.onBestTimeLoaded(bestTime != null ? bestTime : "N/A");
+                })
+                .addOnFailureListener(e -> {
+                    listener.onBestTimeLoaded("N/A");
+                    System.err.println("Failed to load best time: " + e.getMessage());
+                });
+    }
+
+    /** Callback rozhranie pre asynchrónne načítanie času. */
+    public interface OnBestTimeLoadedListener {
+        void onBestTimeLoaded(String bestTime);
     }
 
     /** Prevod stotín na časový reťazec MM:SS:cc */
@@ -34,20 +78,5 @@ public class Utils {
         int s = rem / 100;
         int c = rem % 100;
         return String.format(Locale.US, "%d:%02d:%02d", m, s, c);
-    }
-
-    /** Uloží najlepší čas, ak je lepší než existujúci */
-    public static void saveBestTime(Context ctx, String newTime) {
-        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        String old = prefs.getString(KEY_BEST, "N/A");
-        if (old.equals("N/A") || timeToHundredths(newTime) < timeToHundredths(old)) {
-            prefs.edit().putString(KEY_BEST, newTime).apply();
-        }
-    }
-
-    /** Načíta najlepší čas alebo "N/A" */
-    public static String loadBestTime(Context ctx) {
-        SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        return prefs.getString(KEY_BEST, "N/A");
     }
 }

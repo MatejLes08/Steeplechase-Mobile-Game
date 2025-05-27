@@ -5,10 +5,13 @@ import static sk.spsepo.lesko.steeplechasegame.Horse.TRACK_LENGTH;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class GameEngine {
     private static final double TRACK = TRACK_LENGTH;
     private final Horse horse;
     private final Terrain terrain;
+    private final FirebaseFirestore db;
 
     private double elapsedSec = 0;
     private int minutes = 0;
@@ -30,13 +33,15 @@ public class GameEngine {
     public GameEngine(Horse horse, Terrain terrain, Context ctx) {
         this.horse = horse;
         this.terrain = terrain;
+        this.db = FirebaseFirestore.getInstance();
 
         // získať UID z SharedPreferences (uložené po login/registrácii)
         SharedPreferences prefs = ctx.getSharedPreferences("userdata", Context.MODE_PRIVATE);
         uid = prefs.getString("uid", null);
 
         if (uid != null) {
-            bestRecord = Utils.loadBestTime(ctx, uid);
+            // Načítaj najlepší čas z Firestore
+            Utils.loadBestTime(uid, db, bestTime -> bestRecord = bestTime);
         }
     }
 
@@ -86,13 +91,8 @@ public class GameEngine {
 
             if (uid != null) {
                 String currentTime = timeString;
-
-                // načítaj existujúci rekord
-                String existing = Utils.loadBestTime(ctx, uid);
-                if (existing.equals("N/A") || isFaster(currentTime, existing)) {
-                    Utils.saveBestTime(ctx, uid, currentTime);
-                    bestRecord = currentTime;
-                }
+                Utils.saveBestTime(uid, currentTime, db);
+                Utils.loadBestTime(uid, db, bestTime -> bestRecord = bestTime);
             }
         }
     }
@@ -108,7 +108,7 @@ public class GameEngine {
         return curHundredths < prevHundredths;
     }
 
-    // Gettre pre UI / GameView
+    // Gettery pre UI / GameView
     public boolean isRunning()         { return running; }
     public boolean isVictory()         { return victory; }
     public String getTimeString()      { return timeString; }

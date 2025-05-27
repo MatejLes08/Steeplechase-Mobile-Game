@@ -12,7 +12,11 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class UvodneMenu extends AppCompatActivity {
+
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,15 +24,30 @@ public class UvodneMenu extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_uvodne_menu);
 
+        db = FirebaseFirestore.getInstance();
+
         setBackground();
 
-        // Získaj meno používateľa zo SharedPreferences
+        // Získaj UID zo SharedPreferences
         SharedPreferences prefs = getSharedPreferences("userdata", MODE_PRIVATE);
-        String username = prefs.getString("username", "Hráč");
+        String uid = prefs.getString("uid", null);
 
-        // Zobraz ho v TextView
+        // Zobraz meno používateľa z Firestore
         TextView usernameText = findViewById(R.id.usernameText);
-        usernameText.setText(username);
+        if (uid != null) {
+            db.collection("users").document(uid)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        String username = documentSnapshot.getString("username");
+                        usernameText.setText(username != null ? username : "Hráč");
+                    })
+                    .addOnFailureListener(e -> {
+                        usernameText.setText("Hráč");
+                        // Handle error (e.g., show toast)
+                    });
+        } else {
+            usernameText.setText("Hráč");
+        }
     }
 
     public void startGame(View view) {
