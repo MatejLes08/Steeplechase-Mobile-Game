@@ -23,6 +23,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        // Inicializuje Firebase Authentication
         auth = FirebaseAuth.getInstance();
 
         emailInput = findViewById(R.id.editTextEmail);
@@ -39,26 +40,29 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
+            // Prihlási používateľa cez Firebase
             auth.signInWithEmailAndPassword(email, password)
                     .addOnSuccessListener(authResult -> {
                         FirebaseUser user = auth.getCurrentUser();
                         if (user != null) {
                             String uid = user.getUid();
 
-                            // Uloženie UID do SharedPreferences
+                            // Uloží UID do SharedPreferences
                             SharedPreferences prefs = getSharedPreferences("userdata", MODE_PRIVATE);
                             prefs.edit().putString("uid", uid).apply();
 
+                            // Prejde na úvodné menu
                             startActivity(new Intent(LoginActivity.this, UvodneMenu.class));
                             finish();
                         }
                     })
                     .addOnFailureListener(e ->
-                            Toast.makeText(this, "Prihlásenie zlyhalo: " + e.getMessage(), Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, "Prihlásenie zlyhalo (nesprávny mail alebo heslo)", Toast.LENGTH_LONG).show()
                     );
         });
 
         registerRedirectButton.setOnClickListener(v -> {
+            // Prejde na registračnú obrazovku
             startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
         });
     }

@@ -29,6 +29,7 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        // Inicializuje Firebase Authentication a Firestore
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
@@ -48,13 +49,14 @@ public class RegisterActivity extends AppCompatActivity {
                 return;
             }
 
+            // Vytvorí nového používateľa cez Firebase
             auth.createUserWithEmailAndPassword(email, password)
                     .addOnSuccessListener(result -> {
                         FirebaseUser user = auth.getCurrentUser();
                         if (user != null) {
                             String uid = user.getUid();
 
-                            // Ulož meno a UID do Firestore
+                            // Uloží údaje do Firestore
                             Map<String, Object> userData = new HashMap<>();
                             userData.put("username", name);
                             userData.put("best_time", "N/A");
@@ -62,11 +64,12 @@ public class RegisterActivity extends AppCompatActivity {
                             db.collection("users").document(uid)
                                     .set(userData, SetOptions.merge())
                                     .addOnSuccessListener(aVoid -> {
-                                        // Ulož UID do SharedPreferences (stále potrebné pre GameEngine)
+                                        // Uloží UID do SharedPreferences
                                         SharedPreferences prefs = getSharedPreferences("userdata", MODE_PRIVATE);
                                         prefs.edit().putString("uid", uid).apply();
 
                                         Toast.makeText(this, "Registrácia úspešná!", Toast.LENGTH_SHORT).show();
+                                        // Prejde na úvodné menu
                                         startActivity(new Intent(this, UvodneMenu.class));
                                         finish();
                                     })
@@ -81,6 +84,7 @@ public class RegisterActivity extends AppCompatActivity {
         });
 
         backToLoginButton.setOnClickListener(v -> {
+            // Prejde na prihlasovaciu obrazovku
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         });

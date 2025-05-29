@@ -1,7 +1,13 @@
 package sk.spsepo.lesko.steeplechasegame;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
     private GameView gameView;
@@ -32,5 +38,30 @@ public class MainActivity extends AppCompatActivity {
 
         // 5) Spustenie hernej slučky s Contextom
         gameView.post(() -> gameView.startLoop(this));  // odovzdaj Context do loopu
+
+        // 6) Nastavenie vlastného action baru
+        LayoutInflater inflater = getLayoutInflater();
+        View customActionBarView = inflater.inflate(R.layout.custom_action_bar, null);
+        getSupportActionBar().setCustomView(customActionBarView);
+        getSupportActionBar().setDisplayOptions(androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM);
+        getSupportActionBar().setDisplayShowCustomEnabled(true);
+
+        // 7) Získa UID a načíta meno do action baru
+        String uid = engine.uid; // UID je už načítané v GameEngine
+        TextView usernameText = customActionBarView.findViewById(R.id.usernameText);
+        if (uid != null) {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            db.collection("users").document(uid)
+                    .get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        String username = documentSnapshot.getString("username");
+                        usernameText.setText(username != null ? username : "Hráč");
+                    })
+                    .addOnFailureListener(e -> {
+                        usernameText.setText("Hráč");
+                    });
+        } else {
+            usernameText.setText("Hráč");
+        }
     }
 }

@@ -12,74 +12,62 @@
         android:scaleType="centerCrop" />
 
     <LinearLayout
+        android:id="@+id/buttonLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_centerVertical="true"
         android:layout_marginStart="80dp"
-        android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
 
         <Button
             android:id="@+id/startButton"
             android:layout_width="220dp"
             android:layout_height="65dp"
+            android:layout_marginBottom="25dp"
+            android:background="@drawable/btn_custom"
+            android:elevation="8dp"
+            android:foreground="?attr/selectableItemBackground"
             android:onClick="startGame"
+            android:padding="0dp"
+            android:stateListAnimator="@null"
             android:text="START"
             android:textColor="#FFFFFF"
             android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="25dp"
-            android:background="@drawable/btn_custom"
-            android:foreground="?attr/selectableItemBackground"
-            android:stateListAnimator="@null"
-            android:elevation="8dp"
-            android:padding="0dp"/>
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/infoButton"
             android:layout_width="220dp"
             android:layout_height="65dp"
+            android:layout_marginBottom="25dp"
+            android:background="@drawable/btn_custom"
+            android:elevation="8dp"
+            android:foreground="?attr/selectableItemBackground"
             android:onClick="showInfo"
+            android:padding="0dp"
+            android:stateListAnimator="@null"
             android:text="INFO"
             android:textColor="#FFFFFF"
             android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="25dp"
-            android:background="@drawable/btn_custom"
-            android:foreground="?attr/selectableItemBackground"
-            android:stateListAnimator="@null"
-            android:elevation="8dp"
-            android:padding="0dp"/>
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/exitButton"
             android:layout_width="220dp"
             android:layout_height="65dp"
+            android:background="@drawable/btn_custom"
+            android:elevation="8dp"
+            android:foreground="?attr/selectableItemBackground"
             android:onClick="exitGame"
+            android:padding="0dp"
+            android:stateListAnimator="@null"
             android:text="EXIT"
             android:textColor="#FFFFFF"
             android:textSize="20sp"
-            android:textStyle="bold"
-            android:background="@drawable/btn_custom"
-            android:foreground="?attr/selectableItemBackground"
-            android:stateListAnimator="@null"
-            android:elevation="8dp"
-            android:padding="0dp"/>
+            android:textStyle="bold" />
     </LinearLayout>
-
-    <!-- Text s menom používateľa -->
-    <TextView
-        android:id="@+id/usernameText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hráč"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="210dp"
-        android:layout_marginTop="150dp" />
 
     <ImageView
         android:id="@+id/horseImageView"

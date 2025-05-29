@@ -28,19 +28,19 @@ public class GameEngine {
     private double pathOffset = 0;
     private double lastAccel = 1.0;
 
-    private String uid; // Firebase UID pre prihláseného používateľa
+    String uid; // Firebase UID pre prihláseného používateľa
 
     public GameEngine(Horse horse, Terrain terrain, Context ctx) {
         this.horse = horse;
         this.terrain = terrain;
         this.db = FirebaseFirestore.getInstance();
 
-        // získať UID z SharedPreferences (uložené po login/registrácii)
+        // získa UID z SharedPreferences (uložené po login/registrácii)
         SharedPreferences prefs = ctx.getSharedPreferences("userdata", Context.MODE_PRIVATE);
         uid = prefs.getString("uid", null);
 
         if (uid != null) {
-            // Načítaj najlepší čas z Firestore
+            // Načíta najlepší čas z Firestore
             Utils.loadBestTime(uid, db, bestTime -> bestRecord = bestTime);
         }
     }

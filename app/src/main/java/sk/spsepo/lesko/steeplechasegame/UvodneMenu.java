@@ -4,8 +4,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -21,19 +21,24 @@ public class UvodneMenu extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Nastaví orientáciu na šírku
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(R.layout.activity_uvodne_menu);
 
+        // Inicializuje Firestore
         db = FirebaseFirestore.getInstance();
 
-        setBackground();
+        // Nastaví vlastný layout do action baru
+        LayoutInflater inflater = getLayoutInflater();
+        View customActionBarView = inflater.inflate(R.layout.custom_action_bar, null);
+        getSupportActionBar().setCustomView(customActionBarView);
+        getSupportActionBar().setDisplayOptions(androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM);
+        getSupportActionBar().setDisplayShowCustomEnabled(true);
 
-        // Získaj UID zo SharedPreferences
+        // Získa UID a načíta meno do action baru
         SharedPreferences prefs = getSharedPreferences("userdata", MODE_PRIVATE);
         String uid = prefs.getString("uid", null);
-
-        // Zobraz meno používateľa z Firestore
-        TextView usernameText = findViewById(R.id.usernameText);
+        TextView usernameText = customActionBarView.findViewById(R.id.usernameText);
         if (uid != null) {
             db.collection("users").document(uid)
                     .get()
@@ -43,14 +48,17 @@ public class UvodneMenu extends AppCompatActivity {
                     })
                     .addOnFailureListener(e -> {
                         usernameText.setText("Hráč");
-                        // Handle error (e.g., show toast)
                     });
         } else {
             usernameText.setText("Hráč");
         }
+
+        // Nastaví pozadie
+        setBackground();
     }
 
     public void startGame(View view) {
+        // Spustí hru a ukončí túto aktivitu
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
         finish();
@@ -61,6 +69,7 @@ public class UvodneMenu extends AppCompatActivity {
     }
 
     public void showInfo(View view) {
+        // Zobrazí informačný dialóg
         new AlertDialog.Builder(this)
                 .setView(R.layout.custom_info_dialog)
                 .setPositiveButton("EXIT", null)
@@ -68,6 +77,7 @@ public class UvodneMenu extends AppCompatActivity {
     }
 
     private void setBackground() {
+        // Nastaví obrázok pozadia
         ImageView backgroundImage = findViewById(R.id.backgroundImage);
         backgroundImage.setImageResource(R.drawable.pozadie1);
     }
