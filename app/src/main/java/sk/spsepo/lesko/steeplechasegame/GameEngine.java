@@ -91,8 +91,11 @@ public class GameEngine {
 
             if (uid != null) {
                 String currentTime = timeString;
-                Utils.saveBestTime(uid, currentTime, db);
-                Utils.loadBestTime(uid, db, bestTime -> bestRecord = bestTime);
+                Utils.saveBestTime(uid, currentTime, db, updatedBestTime -> {
+                    if (updatedBestTime != null) {
+                        bestRecord = updatedBestTime; // Okamžite aktualizuje bestRecord
+                    }
+                });
             }
         }
     }

@@ -20,9 +20,12 @@ public class Utils {
         return m * 6000 + s * 100 + c;
     }
 
-    /** Uloží najlepší čas do Firestore, ak je lepší než existujúci. */
-    public static void saveBestTime(String uid, String newTime, FirebaseFirestore db) {
-        if (uid == null) return;
+    /** Uloží najlepší čas do Firestore a vráti nový čas cez callback, ak je lepší než existujúci. */
+    public static void saveBestTime(String uid, String newTime, FirebaseFirestore db, OnBestTimeSavedListener saveListener) {
+        if (uid == null) {
+            saveListener.onBestTimeSaved(null);
+            return;
+        }
 
         // Načítaj existujúci rekord
         db.collection(COLLECTION_USERS).document(uid)
@@ -35,15 +38,24 @@ public class Utils {
                         data.put(KEY_BEST_TIME, newTime);
                         db.collection(COLLECTION_USERS).document(uid)
                                 .set(data, SetOptions.merge())
+                                .addOnSuccessListener(aVoid -> {
+                                    // Vráti nový čas cez callback
+                                    saveListener.onBestTimeSaved(newTime);
+                                })
                                 .addOnFailureListener(e -> {
                                     // Handle error (e.g., log or show toast)
                                     System.err.println("Failed to save best time: " + e.getMessage());
+                                    saveListener.onBestTimeSaved(null);
                                 });
+                    } else {
+                        // Ak čas nie je lepší, vráti existujúci čas
+                        saveListener.onBestTimeSaved(existing);
                     }
                 })
                 .addOnFailureListener(e -> {
                     // Handle error (e.g., log or show toast)
                     System.err.println("Failed to load best time: " + e.getMessage());
+                    saveListener.onBestTimeSaved(null);
                 });
     }
 
@@ -64,6 +76,11 @@ public class Utils {
                     listener.onBestTimeLoaded("N/A");
                     System.err.println("Failed to load best time: " + e.getMessage());
                 });
+    }
+
+    /** Callback rozhranie pre asynchrónne uloženie času. */
+    public interface OnBestTimeSavedListener {
+        void onBestTimeSaved(String bestTime);
     }
 
     /** Callback rozhranie pre asynchrónne načítanie času. */
