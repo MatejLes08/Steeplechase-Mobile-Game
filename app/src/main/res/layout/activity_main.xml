@@ -37,12 +37,6 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"/>
 
-        <Button
-            android:id="@+id/btn_cancel"
-            android:text="Zrušiť"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"/>
 
         <Button
             android:id="@+id/btn_pause"

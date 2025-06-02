@@ -30,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_add).setOnClickListener(v -> horse.addSpeed());
         findViewById(R.id.btn_reduce).setOnClickListener(v -> horse.reduceSpeed());
         findViewById(R.id.btn_start).setOnClickListener(v -> engine.startRace());
-        findViewById(R.id.btn_cancel).setOnClickListener(v -> finish());
 
         // 👉 TLAČIDLO PAUSE
         findViewById(R.id.btn_pause).setOnClickListener(v -> {
@@ -76,4 +75,39 @@ public class MainActivity extends AppCompatActivity {
                     .show();
         });
     }
+
+    public void showFinishDialog(String time, String bestTime, boolean isNewRecord) {
+        runOnUiThread(() -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            LayoutInflater inflater = getLayoutInflater();
+            View dialogView = inflater.inflate(R.layout.dialog_finish, null);
+
+            TextView tvTitle = dialogView.findViewById(R.id.tv_title);
+            TextView tvTime = dialogView.findViewById(R.id.tv_time);
+            TextView tvRecord = dialogView.findViewById(R.id.tv_record);
+
+            tvTitle.setText(isNewRecord ? "Nový rekord!" : "Dokončené!");
+            tvTime.setText("Tvoj čas: " + time);
+            tvRecord.setText("Rekord: " + bestTime);
+
+            builder.setView(dialogView);
+            builder.setCancelable(false);
+
+            // 👉 Tu vytvoríme dialog pred definíciou listenerov
+            AlertDialog dialog = builder.create();
+
+            dialogView.findViewById(R.id.btn_restart).setOnClickListener(v -> {
+                engine.startRace();
+                dialog.dismiss();
+            });
+
+            dialogView.findViewById(R.id.btn_exit).setOnClickListener(v -> {
+                finish();
+            });
+
+            dialog.show();
+        });
+    }
+
+
 }

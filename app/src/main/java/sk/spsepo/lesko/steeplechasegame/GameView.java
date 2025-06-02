@@ -9,15 +9,18 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import java.util.Locale;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
-    private GameEngine engine;
+    private volatile GameEngine engine;
     private Thread gameThread;
-    private boolean running;
+    private volatile boolean running;
     private Bitmap scaledBackground;
 
     // Paint pre texty
@@ -101,17 +104,42 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 engine.update(dt, ctx);
                 engine.getHorse().updateAnimation(dt);
 
+                if (engine.isVictory() && running) {
+                    running = false;
+
+                    if (ctx instanceof MainActivity) {
+                        MainActivity activity = (MainActivity) ctx;
+
+                        FirebaseFirestore db = FirebaseFirestore.getInstance();
+                        String uid = engine.getUid(); // Predpokladáme, že MainActivity má túto metódu
+
+                        String finalTime = engine.getTimeString();
+
+                        Utils.saveBestTime(uid, finalTime, db, new Utils.OnBestTimeSavedListener() {
+                            @Override
+                            public void onBestTimeSaved(String bestTime) {
+                                boolean isNewRecord = false;
+                                if (bestTime != null) {
+                                    isNewRecord = Utils.timeToHundredths(finalTime) <= Utils.timeToHundredths(bestTime);
+                                }
+
+                                boolean finalIsNewRecord = isNewRecord;
+                                activity.runOnUiThread(() -> {
+                                    activity.showFinishDialog(finalTime, bestTime != null ? bestTime : "N/A", finalIsNewRecord);
+                                });
+                            }
+                        });
+                    }
+
+                }
+
+
                 Canvas canvas = getHolder().lockCanvas();
                 if (canvas != null) {
                     synchronized (getHolder()) {
                         drawGame(canvas);
                     }
                     getHolder().unlockCanvasAndPost(canvas);
-                }
-                try {
-                    Thread.sleep(16); // cca 60 FPS
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
                 }
 
             }
@@ -120,13 +148,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     private void drawGame(Canvas canvas) {
-        // 1) vykresli celé pozadie natiahnuté na veľkosť obrazovky
+        // Vykresli celé pozadie natiahnuté na veľkosť obrazovky
         if (scaledBackground != null) {
             canvas.drawBitmap(scaledBackground, 0, 0, null);
         }
 
 
-        // 2) Vypočítaj offset pásikov
+        // Vypočítaj offset pásikov
         double offsetMeters = engine.getDistanceMeters() - 3.0;
         float offsetPx = (float)(offsetMeters * PIXELS_PER_METER);
 
@@ -135,7 +163,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         int start   = (int)(offsetPx / PIXELS_PER_METER);
         float x0    = - (offsetPx % PIXELS_PER_METER);
 
-        // 3) Vykresli pásiky trate ako obrázky
+        // Vykresli pásiky trate ako obrázky
         for (int i = 0; i < visible; i++) {
             int idx = start + i;
             if (idx < 0 || idx >= path.length) continue;
@@ -223,6 +251,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         yr += 60;
         canvas.drawText("Čas: " + engine.getTimeString(), xR, yr, paintRight);
     }
+
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {

@@ -130,7 +130,7 @@ public class GameEngine {
     public Horse getHorse()            { return horse; }
     public double getRemaining()       { return remaining; }
     public double getDistanceMeters()  { return horse.getDistance(); }
-
+    public String getUid()              {return uid; }
     public double getEffectiveSpeed() {
         return horse.getSpeed() * lastAccel;
     }
