@@ -9,6 +9,8 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.Locale;
 
@@ -16,6 +18,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private GameEngine engine;
     private Thread gameThread;
     private boolean running;
+    private Bitmap scaledBackground;
 
     // Paint pre texty
     private Paint paintLeft   = new Paint();
@@ -26,6 +29,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private Bitmap background;
 
     // Terén
+    private final Map<String, Bitmap> scaledBitmapCache = new HashMap<>();
     private Bitmap[] bmpCesta   = new Bitmap[3];
     private Bitmap[] bmpSprint  = new Bitmap[3];
     private Bitmap[] bmpNarocne = new Bitmap[3];
@@ -68,6 +72,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
+    // Pomocná metóda na získanie škálovaného obrázka s kešovaním
+    private Bitmap getScaledBitmap(Bitmap original, int width, int height, String cacheKey) {
+        String key = cacheKey + "_" + width + "x" + height;
+        Bitmap cached = scaledBitmapCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        Bitmap scaled = Bitmap.createScaledBitmap(original, width, height, true);
+        scaledBitmapCache.put(key, scaled);
+        return scaled;
+    }
+
+
     public void setEngine(GameEngine engine) {
         this.engine = engine;
     }
@@ -91,6 +108,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                     }
                     getHolder().unlockCanvasAndPost(canvas);
                 }
+                try {
+                    Thread.sleep(16); // cca 60 FPS
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
             }
         });
         gameThread.start();
@@ -98,10 +121,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     private void drawGame(Canvas canvas) {
         // 1) vykresli celé pozadie natiahnuté na veľkosť obrazovky
-        canvas.drawBitmap(
-                Bitmap.createScaledBitmap(background, getWidth(), getHeight(), true),
-                0, 0, null
-        );
+        if (scaledBackground != null) {
+            canvas.drawBitmap(scaledBackground, 0, 0, null);
+        }
+
 
         // 2) Vypočítaj offset pásikov
         double offsetMeters = engine.getDistanceMeters() - 3.0;
@@ -117,20 +140,31 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             int idx = start + i;
             if (idx < 0 || idx >= path.length) continue;
 
-            Bitmap tile;
-            switch (path[idx]) {
-                case "Napájadlo":        tile = bmpNapiadlo[idx % 3]; break;
-                case "Šprintérske pásmo":tile = bmpSprint[idx % 3]; break;
-                case "Náročné pásmo":    tile = bmpNarocne[idx % 3]; break;
-                default:                 tile = bmpCesta[idx % 3]; break;
-            }
             // škáluj presne na meter x PATH_HEIGHT
-            Bitmap scaled = Bitmap.createScaledBitmap(
-                    tile,
-                    PIXELS_PER_METER,
-                    PATH_HEIGHT,
-                    true
-            );
+            Bitmap tile;
+            String terrain = path[idx];
+            String cacheKey;
+            switch (terrain) {
+                case "Napájadlo":
+                    tile = bmpNapiadlo[idx % 3];
+                    cacheKey = "napajadlo" + (idx % 3);
+                    break;
+                case "Šprintérske pásmo":
+                    tile = bmpSprint[idx % 3];
+                    cacheKey = "sprinterske" + (idx % 3);
+                    break;
+                case "Náročné pásmo":
+                    tile = bmpNarocne[idx % 3];
+                    cacheKey = "narocne" + (idx % 3);
+                    break;
+                default:
+                    tile = bmpCesta[idx % 3];
+                    cacheKey = "cesta" + (idx % 3);
+                    break;
+            }
+
+            Bitmap scaled = getScaledBitmap(tile, PIXELS_PER_METER, PATH_HEIGHT, cacheKey);
+
 
             float x = x0 + i * PIXELS_PER_METER;
             canvas.drawBitmap(scaled, x, PATH_TOP, null);
@@ -190,7 +224,23 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         canvas.drawText("Čas: " + engine.getTimeString(), xR, yr, paintRight);
     }
 
-    @Override public void surfaceCreated(SurfaceHolder h) {}
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        if (background != null) {
+            scaledBackground = Bitmap.createScaledBitmap(background, getWidth(), getHeight(), true);
+        }
+    }
+
     @Override public void surfaceChanged(SurfaceHolder h,int f,int w,int ht) {}
-    @Override public void surfaceDestroyed(SurfaceHolder h) { running = false; }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        running = false;
+        try {
+            if (gameThread != null) gameThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
