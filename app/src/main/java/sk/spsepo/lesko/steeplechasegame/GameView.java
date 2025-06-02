@@ -29,7 +29,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private Bitmap[] bmpCesta   = new Bitmap[3];
     private Bitmap[] bmpSprint  = new Bitmap[3];
     private Bitmap[] bmpNarocne = new Bitmap[3];
-    private Bitmap   bmpNapiadlo;
+    private Bitmap[] bmpNapiadlo = new Bitmap[3];
 
     // Konštanty trate
     private static final int PATH_TOP    = 400;   // horný okraj trate
@@ -63,8 +63,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                     getResources().getIdentifier("sprinterske" + i, "drawable", ctx.getPackageName()));
             bmpNarocne[i] = BitmapFactory.decodeResource(getResources(),
                     getResources().getIdentifier("narocne" + i, "drawable", ctx.getPackageName()));
+            bmpNapiadlo[i] = BitmapFactory.decodeResource(getResources(),
+                    getResources().getIdentifier("napajadlo" + i, "drawable", ctx.getPackageName()));
         }
-        bmpNapiadlo = BitmapFactory.decodeResource(getResources(), R.drawable.napajadlo);
     }
 
     public void setEngine(GameEngine engine) {
@@ -118,7 +119,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
             Bitmap tile;
             switch (path[idx]) {
-                case "Napájadlo":        tile = bmpNapiadlo; break;
+                case "Napájadlo":        tile = bmpNapiadlo[idx % 3]; break;
                 case "Šprintérske pásmo":tile = bmpSprint[idx % 3]; break;
                 case "Náročné pásmo":    tile = bmpNarocne[idx % 3]; break;
                 default:                 tile = bmpCesta[idx % 3]; break;

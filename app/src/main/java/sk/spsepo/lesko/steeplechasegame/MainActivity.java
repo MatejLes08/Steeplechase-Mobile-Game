@@ -1,5 +1,6 @@
 package sk.spsepo.lesko.steeplechasegame;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,35 +20,33 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 1) Inicializácia Horse s Contextom kvôli drawable
         horse = new Horse(this);
-
-        // 2) Inicializácia terénu a engine
         Terrain terrain = new Terrain(this, "mapa1.json");
-        engine = new GameEngine(horse, terrain, this);  // pridali sme Context
+        engine = new GameEngine(horse, terrain, this);
 
-        // 3) Zobrazenie najlepšieho času (už sa načítava v GameEngine z Utils)
         gameView = findViewById(R.id.game_view);
         gameView.setEngine(engine);
 
-        // 4) Ovládacie tlačidlá
         findViewById(R.id.btn_add).setOnClickListener(v -> horse.addSpeed());
         findViewById(R.id.btn_reduce).setOnClickListener(v -> horse.reduceSpeed());
         findViewById(R.id.btn_start).setOnClickListener(v -> engine.startRace());
         findViewById(R.id.btn_cancel).setOnClickListener(v -> finish());
 
-        // 5) Spustenie hernej slučky s Contextom
-        gameView.post(() -> gameView.startLoop(this));  // odovzdaj Context do loopu
+        // 👉 TLAČIDLO PAUSE
+        findViewById(R.id.btn_pause).setOnClickListener(v -> {
+            engine.setPaused(true); // okamžité zastavenie hry
+            showPauseDialog();
+        });
 
-        // 6) Nastavenie vlastného action baru
+        gameView.post(() -> gameView.startLoop(this));
+
         LayoutInflater inflater = getLayoutInflater();
         View customActionBarView = inflater.inflate(R.layout.custom_action_bar, null);
         getSupportActionBar().setCustomView(customActionBarView);
         getSupportActionBar().setDisplayOptions(androidx.appcompat.app.ActionBar.DISPLAY_SHOW_CUSTOM);
         getSupportActionBar().setDisplayShowCustomEnabled(true);
 
-        // 7) Získa UID a načíta meno do action baru
-        String uid = engine.uid; // UID je už načítané v GameEngine
+        String uid = engine.uid;
         TextView usernameText = customActionBarView.findViewById(R.id.usernameText);
         if (uid != null) {
             FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -63,5 +62,18 @@ public class MainActivity extends AppCompatActivity {
         } else {
             usernameText.setText("Hráč");
         }
+    }
+
+    // 👉 METÓDA: Zobrazí pauzovacie dialógové okno
+    private void showPauseDialog() {
+        runOnUiThread(() -> {
+            new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Hra pozastavená")
+                    .setMessage("Čo chceš urobiť?")
+                    .setCancelable(false)
+                    .setPositiveButton("Pokračovať", (dialog, which) -> engine.setPaused(false))
+                    .setNegativeButton("Ukončiť", (dialog, which) -> finish())
+                    .show();
+        });
     }
 }

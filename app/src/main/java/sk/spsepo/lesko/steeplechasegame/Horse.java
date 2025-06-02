@@ -111,9 +111,6 @@ public class Horse {
         remaining = TRACK_LENGTH - distanceTravelled;
         if (remaining < 0) remaining = 0;
 
-        System.out.println("DT: " + dt);
-        System.out.println("Zrýchlenie: " + accel);
-        System.out.println("Preťaženie: " + overload);
     }
 
     public void updateAnimation(double dt) {

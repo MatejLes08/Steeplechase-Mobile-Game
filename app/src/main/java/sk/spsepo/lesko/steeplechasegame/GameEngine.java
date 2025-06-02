@@ -17,6 +17,7 @@ public class GameEngine {
     private int minutes = 0;
     private boolean running = false;
     private boolean victory = false;
+    private boolean paused = false;
 
     // pre UI
     private double remaining = TRACK;
@@ -56,7 +57,7 @@ public class GameEngine {
     }
 
     public void update(double dt, Context ctx) {
-        if (!running) return;
+        if (!running || paused) return;
 
         // čas
         elapsedSec += dt;
@@ -110,6 +111,11 @@ public class GameEngine {
 
         return curHundredths < prevHundredths;
     }
+
+    public void setPaused(boolean paused) {
+        this.paused = paused;
+    }
+
 
     // Gettery pre UI / GameView
     public boolean isRunning()         { return running; }
