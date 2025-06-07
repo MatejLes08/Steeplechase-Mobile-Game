@@ -73,6 +73,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             bmpNapiadlo[i] = BitmapFactory.decodeResource(getResources(),
                     getResources().getIdentifier("napajadlo" + i, "drawable", ctx.getPackageName()));
         }
+        preloadScaledBitmaps();
+    }
+
+    private void preloadScaledBitmaps() {
+        int width = PIXELS_PER_METER;
+        int height = PATH_HEIGHT;
+
+        for (int i = 0; i < 3; i++) {
+            getScaledBitmap(bmpCesta[i], width, height, "cesta" + i);
+            getScaledBitmap(bmpSprint[i], width, height, "sprinterske" + i);
+            getScaledBitmap(bmpNarocne[i], width, height, "narocne" + i);
+            getScaledBitmap(bmpNapiadlo[i], width, height, "napajadlo" + i);
+        }
     }
 
     // Pomocná metóda na získanie škálovaného obrázka s kešovaním
@@ -88,6 +101,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
 
+
+
+
     public void setEngine(GameEngine engine) {
         this.engine = engine;
     }
@@ -95,11 +111,16 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public void startLoop(Context ctx) {
         running = true;
         gameThread = new Thread(() -> {
+            final int targetFPS = 16;
+            final long targetFrameTimeNanos = 1_000_000_000 / targetFPS;
+
             long last = System.nanoTime();
+
             while (running) {
-                long now = System.nanoTime();
-                double dt = (now - last) / 1_000_000_000.0;
-                last = now;
+                long startTime = System.nanoTime();
+                double dt = (startTime - last) / 1_000_000_000.0;
+                last = startTime;
+
 
                 engine.update(dt, ctx);
                 engine.getHorse().updateAnimation(dt);
@@ -111,8 +132,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                         MainActivity activity = (MainActivity) ctx;
 
                         FirebaseFirestore db = FirebaseFirestore.getInstance();
-                        String uid = engine.getUid(); // Predpokladáme, že MainActivity má túto metódu
-
+                        String uid = engine.getUid();
                         String finalTime = engine.getTimeString();
 
                         Utils.saveBestTime(uid, finalTime, db, new Utils.OnBestTimeSavedListener() {
@@ -142,6 +162,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                     getHolder().unlockCanvasAndPost(canvas);
                 }
 
+                // FPS limiter (spánok, ak ideš rýchlejšie než 48 FPS)
+                long frameDuration = System.nanoTime() - startTime;
+                long sleepTime = targetFrameTimeNanos - frameDuration;
+                if (sleepTime > 0) {
+                    try {
+                        Thread.sleep(sleepTime / 1_000_000, (int)(sleepTime % 1_000_000));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
             }
         });
         gameThread.start();
@@ -152,7 +183,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         if (scaledBackground != null) {
             canvas.drawBitmap(scaledBackground, 0, 0, null);
         }
-
 
         // Vypočítaj offset pásikov
         double offsetMeters = engine.getDistanceMeters() - 3.0;
@@ -251,6 +281,18 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         yr += 60;
         canvas.drawText("Čas: " + engine.getTimeString(), xR, yr, paintRight);
     }
+
+    public void stopLoop() {
+        running = false;
+        try {
+            if (gameThread != null) {
+                gameThread.join();  // čaká, kým sa thread bezpečne ukončí
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 
     @Override

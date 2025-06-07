@@ -23,7 +23,6 @@ public class MainActivity extends AppCompatActivity {
         horse = new Horse(this);
         Terrain terrain = new Terrain(this, "mapa1.json");
         engine = new GameEngine(horse, terrain, this);
-
         gameView = findViewById(R.id.game_view);
         gameView.setEngine(engine);
 
@@ -63,6 +62,32 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void restartGame() {
+        Horse newHorse = new Horse(this);
+        Terrain newTerrain = new Terrain(this, "mapa1.json");
+        GameEngine newEngine = new GameEngine(newHorse, newTerrain, this);
+
+        this.engine = newEngine;
+        this.horse = newHorse;
+
+        gameView.setEngine(newEngine);
+        gameView.stopLoop(); // zabezpečí ukončenie predchádzajúceho vlákna
+
+        // ✅ Spustíme loop správne ako v onCreate — cez post()
+        gameView.post(() -> gameView.startLoop(this));
+
+        // ✅ Opätovné pripojenie listenerov k novým objektom
+        findViewById(R.id.btn_add).setOnClickListener(v -> horse.addSpeed());
+        findViewById(R.id.btn_reduce).setOnClickListener(v -> horse.reduceSpeed());
+        findViewById(R.id.btn_start).setOnClickListener(v -> engine.startRace());
+        findViewById(R.id.btn_pause).setOnClickListener(v -> {
+            engine.setPaused(true);
+            showPauseDialog();
+        });
+    }
+
+
+
     // 👉 METÓDA: Zobrazí pauzovacie dialógové okno
     private void showPauseDialog() {
         runOnUiThread(() -> {
@@ -97,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog dialog = builder.create();
 
             dialogView.findViewById(R.id.btn_restart).setOnClickListener(v -> {
-                engine.startRace();
+                restartGame();
                 dialog.dismiss();
             });
 
