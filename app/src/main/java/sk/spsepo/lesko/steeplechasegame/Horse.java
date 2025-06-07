@@ -138,4 +138,5 @@ public class Horse {
     public int getRemaining() { return (int)Math.round(remaining); }
     public double getOverload() { return overload; }
     public Bitmap getCurrentBitmap() { return currentBitmap; }
+    public int getTrackLength() { return TRACK_LENGTH; }
 }

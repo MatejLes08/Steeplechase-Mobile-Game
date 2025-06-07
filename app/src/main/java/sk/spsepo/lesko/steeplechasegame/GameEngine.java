@@ -128,6 +128,7 @@ public class GameEngine {
     public String getCurrentTerrain()  { return currentType; }
     public double getPathOffset()      { return distanceMeters; }
     public Horse getHorse()            { return horse; }
+    public Terrain getTerrain()            { return terrain; }
     public double getRemaining()       { return remaining; }
     public double getDistanceMeters()  { return horse.getDistance(); }
     public String getUid()              {return uid; }

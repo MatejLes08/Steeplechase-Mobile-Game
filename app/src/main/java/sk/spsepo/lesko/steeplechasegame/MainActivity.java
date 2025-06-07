@@ -73,10 +73,10 @@ public class MainActivity extends AppCompatActivity {
         gameView.setEngine(newEngine);
         gameView.stopLoop(); // zabezpečí ukončenie predchádzajúceho vlákna
 
-        // ✅ Spustíme loop správne ako v onCreate — cez post()
+        // Spustíme loop
         gameView.post(() -> gameView.startLoop(this));
 
-        // ✅ Opätovné pripojenie listenerov k novým objektom
+        // Opätovné pripojenie listenerov k novým objektom
         findViewById(R.id.btn_add).setOnClickListener(v -> horse.addSpeed());
         findViewById(R.id.btn_reduce).setOnClickListener(v -> horse.reduceSpeed());
         findViewById(R.id.btn_start).setOnClickListener(v -> engine.startRace());

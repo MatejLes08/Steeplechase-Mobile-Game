@@ -79,6 +79,6 @@ public class UvodneMenu extends AppCompatActivity {
     private void setBackground() {
         // Nastaví obrázok pozadia
         ImageView backgroundImage = findViewById(R.id.backgroundImage);
-        backgroundImage.setImageResource(R.drawable.pozadie1);
+        backgroundImage.setImageResource(R.drawable.pozadie);
     }
 }

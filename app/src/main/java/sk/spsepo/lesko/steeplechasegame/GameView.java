@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -57,7 +58,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         paintRight.setTextSize(52);
 
         // --- Načítanie obrázkov ---
-        background = BitmapFactory.decodeResource(getResources(), R.drawable.pozadie1);
+        background = BitmapFactory.decodeResource(getResources(), R.drawable.pozadie);
 
         loadTerrainBitmaps(ctx);
     }
@@ -184,6 +185,31 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             canvas.drawBitmap(scaledBackground, 0, 0, null);
         }
 
+        double trackLength = engine.getHorse().getTrackLength(); // v metroch
+
+        // 2. Získaj pozíciu koňa (v metroch)
+        double horseDistance = engine.getHorse().getDistance(); // v metroch
+
+        // 3. Výpočet scrollX – horizontálny posun podľa vzdialenosti
+        int backgroundWidth = background.getWidth(); // napr. 5000px
+        int screenWidth = getWidth();
+
+        // maxScroll = max počet pixelov, ktoré môžeš posunúť
+        int maxScrollX = backgroundWidth - screenWidth;
+
+        // koľko percent trate sme prešli
+        double progress = horseDistance / trackLength;
+
+        // pozícia pozadia: od 0 (začiatok) po maxScrollX (koniec)
+        int scrollX = (int) (progress * maxScrollX);
+
+        // 4. Vykresli výrez z pozadia
+        Rect src = new Rect(scrollX, 0, scrollX + screenWidth, background.getHeight());
+        Rect dst = new Rect(0, 0, screenWidth, getHeight());
+
+        canvas.drawBitmap(background, src, dst, null);
+
+
         // Vypočítaj offset pásikov
         double offsetMeters = engine.getDistanceMeters() - 3.0;
         float offsetPx = (float)(offsetMeters * PIXELS_PER_METER);
@@ -222,9 +248,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             }
 
             Bitmap scaled = getScaledBitmap(tile, PIXELS_PER_METER, PATH_HEIGHT, cacheKey);
-
-
             float x = x0 + i * PIXELS_PER_METER;
+
             canvas.drawBitmap(scaled, x, PATH_TOP, null);
         }
 
