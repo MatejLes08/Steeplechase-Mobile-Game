@@ -1,6 +1,7 @@
 package sk.spsepo.lesko.steeplechasegame;
 
 import android.app.AlertDialog;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +15,7 @@ public class MainActivity extends AppCompatActivity {
     private GameView gameView;
     private GameEngine engine;
     private Horse horse;
+    private MediaPlayer mediaPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,11 +30,23 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_add).setOnClickListener(v -> horse.addSpeed());
         findViewById(R.id.btn_reduce).setOnClickListener(v -> horse.reduceSpeed());
-        findViewById(R.id.btn_start).setOnClickListener(v -> engine.startRace());
+        findViewById(R.id.btn_start).setOnClickListener(v -> {
+            engine.startRace();
+            if (mediaPlayer == null) {
+                mediaPlayer = MediaPlayer.create(this, R.raw.background_music);
+                mediaPlayer.setLooping(true);
+                mediaPlayer.start();
+            } else if (!mediaPlayer.isPlaying()) {
+                mediaPlayer.start();
+            }
+        });
 
         // 👉 TLAČIDLO PAUSE
         findViewById(R.id.btn_pause).setOnClickListener(v -> {
-            engine.setPaused(true); // okamžité zastavenie hry
+            engine.setPaused(true);
+            if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                mediaPlayer.pause();
+            }
             showPauseDialog();
         });
 
@@ -84,9 +98,16 @@ public class MainActivity extends AppCompatActivity {
             engine.setPaused(true);
             showPauseDialog();
         });
+
+        // Spustenie hudby pri reštarte
+        if (mediaPlayer == null) {
+            mediaPlayer = MediaPlayer.create(this, R.raw.background_music);
+            mediaPlayer.setLooping(true);
+            mediaPlayer.start();
+        } else if (!mediaPlayer.isPlaying()) {
+            mediaPlayer.start();
+        }
     }
-
-
 
     // 👉 METÓDA: Zobrazí pauzovacie dialógové okno
     private void showPauseDialog() {
@@ -95,7 +116,12 @@ public class MainActivity extends AppCompatActivity {
                     .setTitle("Hra pozastavená")
                     .setMessage("Čo chceš urobiť?")
                     .setCancelable(false)
-                    .setPositiveButton("Pokračovať", (dialog, which) -> engine.setPaused(false))
+                    .setPositiveButton("Pokračovať", (dialog, which) -> {
+                        engine.setPaused(false);
+                        if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+                            mediaPlayer.start();
+                        }
+                    })
                     .setNegativeButton("Ukončiť", (dialog, which) -> finish())
                     .show();
         });
@@ -134,5 +160,12 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+    }
 }
