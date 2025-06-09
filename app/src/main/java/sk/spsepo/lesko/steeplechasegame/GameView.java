@@ -38,11 +38,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private Bitmap[] bmpSprint  = new Bitmap[3];
     private Bitmap[] bmpNarocne = new Bitmap[3];
     private Bitmap[] bmpNapiadlo = new Bitmap[3];
+    private Bitmap bmpStart;
+    private Bitmap bmpCiel;
+
 
     // Konštanty trate
     private static final int PATH_TOP    = 500;   // horný okraj trate
     private static final int PATH_HEIGHT = 250;   // výška pásikov
-    private static final int HORSE_X     = 400;   // X pozícia koňa
+    private static final int HORSE_X     = 500;   // X pozícia koňa
     private static final int PIXELS_PER_METER = 100;
 
     public GameView(Context ctx, AttributeSet attrs) {
@@ -73,6 +76,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                     getResources().getIdentifier("narocne" + i, "drawable", ctx.getPackageName()));
             bmpNapiadlo[i] = BitmapFactory.decodeResource(getResources(),
                     getResources().getIdentifier("napajadlo" + i, "drawable", ctx.getPackageName()));
+            bmpStart = BitmapFactory.decodeResource(getResources(), R.drawable.start);
+            bmpCiel = BitmapFactory.decodeResource(getResources(), R.drawable.ciel);
+
         }
         preloadScaledBitmaps();
     }
@@ -214,7 +220,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
 
         // Vypočítaj offset pásikov
-        double offsetMeters = engine.getDistanceMeters() - 6.0;
+        double offsetMeters = engine.getDistanceMeters() - 1.0;
         float offsetPx = (float)(offsetMeters * PIXELS_PER_METER);
 
         String[] path = engine.getTerrainPath();
@@ -243,6 +249,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 case "Náročné pásmo":
                     tile = bmpNarocne[idx % 3];
                     cacheKey = "narocne" + (idx % 3);
+                    break;
+                case "Štart":
+                    tile = bmpStart;
+                    cacheKey = "start";
+                    break;
+                case "Cieľ":
+                    tile = bmpCiel;
+                    cacheKey = "ciel";
                     break;
                 default:
                     tile = bmpCesta[idx % 3];

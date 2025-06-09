@@ -136,13 +136,38 @@ public class GameEngine {
         return horse.getSpeed() * lastAccel;
     }
 
+
     public String[] getTerrainPath() {
-        String[] path = new String[TRACK_LENGTH];
+        int preStart = 6;
+        int postGoal = 10;
+        int totalLength = preStart + 1 + TRACK_LENGTH + 1 + postGoal; // 6 + START + trať + CIEĽ + 10
+
+        String[] path = new String[totalLength];
+
+        // 6 metrov pred štartom – obyčajná cesta
+        for (int i = 0; i < preStart; i++) {
+            path[i] = "Cesta";
+        }
+
+        // Štart
+        path[preStart] = "Štart";
+
+        // Pôvodná trať (logika ostáva zachovaná)
         for (int m = 0; m < TRACK_LENGTH; m++) {
             double rem = TRACK_LENGTH - m;
             Terrain.TerrainSegment seg = terrain.getSegment(rem);
-            path[m] = seg.type;
+            path[preStart + 1 + m] = seg.type;
         }
+
+        // Cieľ
+        path[preStart + 1 + TRACK_LENGTH] = "Cieľ";
+
+        // 10 metrov po cieľovej čiare – obyčajná cesta
+        for (int i = 0; i < postGoal; i++) {
+            path[preStart + 1 + TRACK_LENGTH + 1 + i] = "Cesta";
+        }
+
         return path;
     }
+
 }

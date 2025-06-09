@@ -34,19 +34,10 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_add).setOnClickListener(v -> horse.addSpeed());
         findViewById(R.id.btn_reduce).setOnClickListener(v -> horse.reduceSpeed());
-        findViewById(R.id.btn_start).setOnClickListener(v -> engine.startRace());
-        findViewById(R.id.btn_start).setOnClickListener(v -> {
-            // Spustenie hry (príklad, uprav podľa toho, ako hru štartuješ)
+        View btnStart = findViewById(R.id.btn_start);
+        btnStart.setOnClickListener(v -> {
             engine.startRace();
-            // Skrytie tlačidla
             v.setVisibility(View.GONE);
-            if (mediaPlayer == null) {
-                mediaPlayer = MediaPlayer.create(this, R.raw.background_music);
-                mediaPlayer.setLooping(true);
-                mediaPlayer.start();
-            } else if (!mediaPlayer.isPlaying()) {
-                mediaPlayer.start();
-            }
         });
         // 👉 TLAČIDLO PAUSE
         findViewById(R.id.btn_pause_icon).setOnClickListener(v -> {
@@ -81,6 +72,10 @@ public class MainActivity extends AppCompatActivity {
         } else {
             usernameText.setText("Hráč");
         }
+
+        mediaPlayer = MediaPlayer.create(this, R.raw.background_music);
+        mediaPlayer.setLooping(true);
+        mediaPlayer.start();
     }
 
     public void restartGame() {
@@ -137,6 +132,31 @@ public class MainActivity extends AppCompatActivity {
                 dialog.dismiss();
             });
 
+            // Nastavenie tlačidla „Reštart“
+            dialogView.findViewById(R.id.btn_restart).setOnClickListener(v -> {
+                restartGame();
+
+                // Zobraz tlačidlo "Štart" znova
+                View btnStart = findViewById(R.id.btn_start);
+                btnStart.setVisibility(View.VISIBLE);
+                btnStart.setOnClickListener(t -> {
+                    engine.startRace();
+                    t.setVisibility(View.GONE);
+                });
+
+                // Spusti hudbu od začiatku
+                if (mediaPlayer != null) {
+                    mediaPlayer.stop();
+                    mediaPlayer.release();
+                    mediaPlayer = null;
+                }
+                mediaPlayer = MediaPlayer.create(MainActivity.this, R.raw.background_music);
+                mediaPlayer.setLooping(true);
+                mediaPlayer.start();
+
+                dialog.dismiss();
+            });
+
             // Nastavenie tlačidla „Späť do menu“
             dialogView.findViewById(R.id.btn_exit).setOnClickListener(v -> {
                 dialog.dismiss();
@@ -170,6 +190,24 @@ public class MainActivity extends AppCompatActivity {
 
             dialogView.findViewById(R.id.btn_restart).setOnClickListener(v -> {
                 restartGame();
+
+                View btnStart = findViewById(R.id.btn_start);
+                btnStart.setVisibility(View.VISIBLE);
+                btnStart.setOnClickListener(u -> {
+                    engine.startRace();
+                    u.setVisibility(View.GONE);
+                });
+
+                // Spusti hudbu od začiatku
+                if (mediaPlayer != null) {
+                    mediaPlayer.stop();
+                    mediaPlayer.release();
+                    mediaPlayer = null;
+                }
+                mediaPlayer = MediaPlayer.create(MainActivity.this, R.raw.background_music);
+                mediaPlayer.setLooping(true);
+                mediaPlayer.start();
+
                 dialog.dismiss();
             });
 
