@@ -112,6 +112,8 @@ public class MainActivity extends AppCompatActivity {
     // 👉 METÓDA: Zobrazí pauzovacie dialógové okno
     private void showPauseDialog() {
         runOnUiThread(() -> {
+            LayoutInflater inflater = getLayoutInflater();
+            View dialogView = inflater.inflate(R.layout.dialog_pause, null);
             new AlertDialog.Builder(MainActivity.this)
                     .setTitle("Hra pozastavená")
                     .setMessage("Čo chceš urobiť?")
