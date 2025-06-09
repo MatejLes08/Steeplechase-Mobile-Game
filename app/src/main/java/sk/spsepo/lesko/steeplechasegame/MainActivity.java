@@ -119,22 +119,34 @@ public class MainActivity extends AppCompatActivity {
     // 👉 METÓDA: Zobrazí pauzovacie dialógové okno
     private void showPauseDialog() {
         runOnUiThread(() -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
             LayoutInflater inflater = getLayoutInflater();
             View dialogView = inflater.inflate(R.layout.dialog_pause, null);
-            new AlertDialog.Builder(MainActivity.this)
-                    .setTitle("Hra pozastavená")
-                    .setMessage("Čo chceš urobiť?")
-                    .setCancelable(false)
-                    .setPositiveButton("Pokračovať", (dialog, which) -> {
-                        engine.setPaused(false);
-                        if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
-                            mediaPlayer.start();
-                        }
-                    })
-                    .setNegativeButton("Ukončiť", (dialog, which) -> finish())
-                    .show();
+
+            builder.setView(dialogView);
+            builder.setCancelable(false); // Zamedzí zrušeniu kliknutím mimo
+
+            AlertDialog dialog = builder.create();
+
+            // Nastavenie tlačidla „Pokračovať“
+            dialogView.findViewById(R.id.btn_continue).setOnClickListener(v -> {
+                engine.setPaused(false);
+                if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+                    mediaPlayer.start();
+                }
+                dialog.dismiss();
+            });
+
+            // Nastavenie tlačidla „Späť do menu“
+            dialogView.findViewById(R.id.btn_exit).setOnClickListener(v -> {
+                dialog.dismiss();
+                finish(); // alebo presun do hlavného menu ak ho máš
+            });
+
+            dialog.show();
         });
     }
+
 
     public void showFinishDialog(String time, String bestTime, boolean isNewRecord) {
         runOnUiThread(() -> {
