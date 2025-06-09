@@ -40,9 +40,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private Bitmap[] bmpNapiadlo = new Bitmap[3];
 
     // Konštanty trate
-    private static final int PATH_TOP    = 400;   // horný okraj trate
+    private static final int PATH_TOP    = 500;   // horný okraj trate
     private static final int PATH_HEIGHT = 250;   // výška pásikov
-    private static final int HORSE_X     = 100;   // X pozícia koňa
+    private static final int HORSE_X     = 400;   // X pozícia koňa
     private static final int PIXELS_PER_METER = 100;
 
     public GameView(Context ctx, AttributeSet attrs) {
@@ -187,10 +187,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
         double trackLength = engine.getHorse().getTrackLength(); // v metroch
 
-        // 2. Získaj pozíciu koňa (v metroch)
+        // Získaj pozíciu koňa (v metroch)
         double horseDistance = engine.getHorse().getDistance(); // v metroch
 
-        // 3. Výpočet scrollX – horizontálny posun podľa vzdialenosti
+        // Výpočet scrollX – horizontálny posun podľa vzdialenosti
         int backgroundWidth = background.getWidth(); // napr. 5000px
         int screenWidth = getWidth();
 
@@ -204,14 +204,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         int scrollX = (int) (progress * maxScrollX);
 
         // 4. Vykresli výrez z pozadia
+        int backgroundOffsetY = -200; // záporné číslo posunie pozadie vyššie
         Rect src = new Rect(scrollX, 0, scrollX + screenWidth, background.getHeight());
-        Rect dst = new Rect(0, 0, screenWidth, getHeight());
+        Rect dst = new Rect(0, backgroundOffsetY, screenWidth, getHeight() + backgroundOffsetY);
 
         canvas.drawBitmap(background, src, dst, null);
 
 
+
+
         // Vypočítaj offset pásikov
-        double offsetMeters = engine.getDistanceMeters() - 3.0;
+        double offsetMeters = engine.getDistanceMeters() - 6.0;
         float offsetPx = (float)(offsetMeters * PIXELS_PER_METER);
 
         String[] path = engine.getTerrainPath();
@@ -262,49 +265,70 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             canvas.drawBitmap(horseBmp, HORSE_X, horseY, null);
         }
 
-        // 5) UI texty – tri stĺpce
+        // UI texty – tri stĺpce
         // **ľavý stĺpec** (aligned left)
-        float xL = 30;
-        float y = 80;
-        canvas.drawText("Rýchlosť: " + Math.round(engine.getEffectiveSpeed()) + " km/h", xL, y, paintLeft);
-        y += 40;
-        // energia bar s percentom
-        int st = (int) engine.getStamina();
-        int barW = 300, barH = 40;
-        float barX = xL, barY = y;
-        // pozadie baru
+        // Vstupné súradnice
+        float margin = 70;
+        float yTop = 120;
+        float iconSize = 120;
+
+
+        // --- Bar energie ---
+        int stamina = (int) engine.getStamina();
+        int barW = 400, barH = 60;
+        float barX = margin + iconSize + 40;  // hneď za ikonou pauzy
+        float barY = yTop / 2f + 10;
+
         paintLeft.setStyle(Paint.Style.STROKE);
         paintLeft.setStrokeWidth(4);
         canvas.drawRect(barX, barY, barX + barW, barY + barH, paintLeft);
+
+        // výplň
         paintLeft.setStyle(Paint.Style.FILL);
-        paintLeft.setColor(st>66?Color.GREEN:st>33?Color.YELLOW:Color.RED);
-        canvas.drawRect(barX, barY, barX + barW * st / (float) Horse.MAX_STAMINA, barY + barH, paintLeft);
-        // percent text
+        paintLeft.setColor(stamina > 66 ? Color.GREEN : stamina > 33 ? Color.YELLOW : Color.RED);
+        canvas.drawRect(barX, barY, barX + barW * stamina / (float)Horse.MAX_STAMINA, barY + barH, paintLeft);
+
+        // percento
+        paintLeft.setTextSize(60);
         paintLeft.setColor(Color.BLACK);
-        canvas.drawText(st + "%", barX + barW/2 - paintLeft.measureText(st + "%")/2, barY + barH - 8, paintLeft);
-        y += 80;
-        canvas.drawText(
-                String.format(Locale.US, "Preťaženie: %.2f%%", engine.getOverloadPercent()),
-                xL, y, paintLeft
-        );
+        String staminaText = stamina + "%";
+        canvas.drawText(staminaText, barX + barW/2 - paintLeft.measureText(staminaText)/2, barY + barH - 8, paintLeft);
+
+        // --- Preťaženie vedľa baru (na koniec)
+        paintLeft.setTextSize(60);
+        String overloadText = String.format(Locale.US, "%.1f%%/s", engine.getOverloadPercent()  * (-1));
+        float overloadX = barX + barW + 20;
+        float overloadY = barY + barH - 8;
+        canvas.drawText(overloadText, overloadX, overloadY, paintLeft);
+
+
+        // druhý riadok – rýchlosť (väčší text)
+        paintLeft.setTextSize(60); // alebo iný väčší rozmer
+        float ySpeed = yTop + iconSize + 40;
+        canvas.drawText("Rýchlosť: " + Math.round(engine.getEffectiveSpeed()) + " km/h", margin, ySpeed, paintLeft);
+
 
 
         // **stredný stĺpec** (centered)
         float xC = getWidth()/2f;
-        float yc = 80;
         String metres = (int)engine.getRemaining() + " m";
         paintCenter.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText(metres, xC, yc, paintCenter);
-        yc += 80;
-        canvas.drawText(engine.getCurrentTerrain(), xC, yc, paintCenter);
+        paintCenter.setTextSize(100);
+        canvas.drawText(metres, xC, yTop + 50, paintCenter);
+
+        // aktuálny terén
+        paintCenter.setTextSize(60);
+        canvas.drawText(engine.getCurrentTerrain(), xC, yTop + 130, paintCenter);
 
         // **pravý stĺpec** (aligned right)
         paintRight.setTextAlign(Paint.Align.RIGHT);
-        float xR = getWidth() - 30;
-        float yr = 80;
-        canvas.drawText("Rekord: " + engine.getBestRecord(), xR, yr, paintRight);
-        yr += 60;
-        canvas.drawText("Čas: " + engine.getTimeString(), xR, yr, paintRight);
+        float xR = getWidth() - margin;
+        paintRight.setTextSize(70);
+        canvas.drawText("Čas: " + engine.getTimeString(), xR, yTop, paintRight);
+
+        // rekord
+        paintRight.setTextSize(48);
+        canvas.drawText("Rekord: " + engine.getBestRecord(), xR, yTop + 60, paintRight);
     }
 
     public void stopLoop() {

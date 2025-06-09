@@ -18,6 +18,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // skryje ActionBar
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
         setContentView(R.layout.activity_main);
 
         horse = new Horse(this);
@@ -29,9 +33,14 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_add).setOnClickListener(v -> horse.addSpeed());
         findViewById(R.id.btn_reduce).setOnClickListener(v -> horse.reduceSpeed());
         findViewById(R.id.btn_start).setOnClickListener(v -> engine.startRace());
-
+        findViewById(R.id.btn_start).setOnClickListener(v -> {
+            // Spustenie hry (príklad, uprav podľa toho, ako hru štartuješ)
+            engine.startRace();
+            // Skrytie tlačidla
+            v.setVisibility(View.GONE);
+        });
         // 👉 TLAČIDLO PAUSE
-        findViewById(R.id.btn_pause).setOnClickListener(v -> {
+        findViewById(R.id.btn_pause_icon).setOnClickListener(v -> {
             engine.setPaused(true); // okamžité zastavenie hry
             showPauseDialog();
         });
@@ -80,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_add).setOnClickListener(v -> horse.addSpeed());
         findViewById(R.id.btn_reduce).setOnClickListener(v -> horse.reduceSpeed());
         findViewById(R.id.btn_start).setOnClickListener(v -> engine.startRace());
-        findViewById(R.id.btn_pause).setOnClickListener(v -> {
+        findViewById(R.id.btn_pause_icon).setOnClickListener(v -> {
             engine.setPaused(true);
             showPauseDialog();
         });
