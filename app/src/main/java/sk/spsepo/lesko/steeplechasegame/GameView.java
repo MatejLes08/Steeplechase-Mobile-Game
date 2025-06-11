@@ -22,7 +22,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private volatile GameEngine engine;
     private Thread gameThread;
     private volatile boolean running;
-    private Bitmap scaledBackground;
+
 
     // Paint pre texty
     private Paint paintLeft   = new Paint();
@@ -31,6 +31,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     // Pozadie
     private Bitmap background;
+    private Bitmap scaledBackground;
+
+    private Bitmap foreground;
+    private Bitmap scaledForeground;
+    private int foregroundHeight = 200;  // výška trávy
+    int desiredHeight = 150; // napr. 2x pôvodná výška
+
+
 
     // Terén
     private final Map<String, Bitmap> scaledBitmapCache = new HashMap<>();
@@ -62,6 +70,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
         // --- Načítanie obrázkov ---
         background = BitmapFactory.decodeResource(getResources(), R.drawable.pozadie);
+        foreground = BitmapFactory.decodeResource(getResources(), R.drawable.trava); // napr. trava.png
+
+        // Zväčšenie foregroundu
+        desiredHeight = 1200; // nastav požadovanú výšku trávy
+        float scale = (float) desiredHeight / foreground.getHeight();
+        int scaledWidth = (int) (foreground.getWidth() * scale);
+
+        scaledForeground = Bitmap.createScaledBitmap(foreground, scaledWidth, desiredHeight, true);
 
         loadTerrainBitmaps(ctx);
     }
@@ -270,6 +286,27 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             canvas.drawBitmap(scaled, x, PATH_TOP, null);
         }
 
+
+
+        // --- Foreground (tráva, ktorá sa hýbe rýchlejšie než trať) ---
+        if (scaledForeground != null) {
+            // Posun trávy – môže sa hýbať rýchlejšie než pozadie
+            float foregroundOffset = (float)(offsetPx * 1.5);
+            int fgWidth = scaledForeground.getWidth(); // OPRAVA – používaj scaledForeground!
+
+            // Umiestni trávu úplne naspodok
+            int y = getHeight() - scaledForeground.getHeight();
+
+            // Opakuj trávu do celej šírky obrazovky
+            for (int x = -((int)(foregroundOffset) % fgWidth); x < getWidth(); x += fgWidth) {
+                canvas.drawBitmap(scaledForeground, x, y, null);
+            }
+        }
+
+
+
+
+
         // Vykresli koňa uprostred trate
         Bitmap horseBmp = engine.getHorse().getCurrentBitmap();
         if (horseBmp != null) {
@@ -359,13 +396,21 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
 
     @Override
-    public void surfaceCreated(SurfaceHolder holder) {
+    public void surfaceCreated(SurfaceHolder holder) {}
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         if (background != null) {
-            scaledBackground = Bitmap.createScaledBitmap(background, getWidth(), getHeight(), true);
+            scaledBackground = Bitmap.createScaledBitmap(background, width, height, true);
+        }
+        if (foreground != null) {
+            // Zvýš výšku, ale šírku nechaj rovnakú
+            float scale = desiredHeight / (float)foreground.getHeight();
+            int scaledWidth = (int)(foreground.getWidth() * scale);
+
+            scaledForeground = Bitmap.createScaledBitmap(foreground, scaledWidth, desiredHeight, true);
         }
     }
-
-    @Override public void surfaceChanged(SurfaceHolder h,int f,int w,int ht) {}
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
